@@ -5,7 +5,9 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "node server.js",
+    "deploy": "wrangler pages deploy public",
+    "preview": "wrangler pages dev public --compatibility-date=2024-01-01"
   },
   "keywords": ["ai", "image-analysis", "image-generation"],
   "author": "",
@@ -16,5 +18,8 @@
     "axios": "^1.6.2",
     "dotenv": "^16.3.1",
     "form-data": "^4.0.0"
+  },
+  "devDependencies": {
+    "wrangler": "^3.0.0"
   }
 }
