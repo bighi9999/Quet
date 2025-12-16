@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Product Image Analyzer & Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .api-key-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        .api-key-section label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .api-key-section input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        .api-key-section input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .api-key-section small {
+            display: block;
+            margin-top: 8px;
+            color: #666;
+        }
+
+        .upload-section {
+            background: #f8f9fa;
+            border: 3px dashed #ddd;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 30px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .upload-section:hover {
+            border-color: #667eea;
+            background: #f0f0ff;
+        }
+
+        .upload-section.drag-over {
+            border-color: #667eea;
+            background: #e8e8ff;
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+
+        .upload-section h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .upload-section p {
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            margin-left: 10px;
+        }
+
+        .preview-section {
+            display: none;
+            margin-bottom: 30px;
+        }
+
+        .preview-image {
+            max-width: 100%;
+            height: auto;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .analysis-section {
+            display: none;
+            margin-bottom: 30px;
+        }
+
+        .analysis-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .analysis-card h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .analysis-item {
+            margin-bottom: 15px;
+        }
+
+        .analysis-item strong {
+            display: block;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .analysis-item p {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .prompts-section {
+            display: none;
+        }
+
+        .prompt-card {
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .prompt-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .prompt-card.selected {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            border: 3px solid #667eea;
+        }
+
+        .prompt-card h4 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+
+        .prompt-card p {
+            color: #555;
+            line-height: 1.6;
+        }
+
+        .generate-section {
+            display: none;
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .result-section {
+            display: none;
+            margin-top: 30px;
+        }
+
+        .result-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        .result-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .result-card h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .result-card img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 15px;
+        }
+
+        .result-card .revised-prompt {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            color: #666;
+            line-height: 1.6;
+            font-size: 0.95em;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: #fee;
+            color: #c33;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            display: none;
+        }
+
+        .success-message {
+            background: #efe;
+            color: #3c3;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .result-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .content {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎨 AI Product Image Analyzer</h1>
+            <p>Phân tích ảnh sản phẩm và tạo prompt AI để sinh ảnh mới</p>
+        </div>
+
+        <div class="content">
+            <!-- API Key Section -->
+            <div class="api-key-section">
+                <label for="apiKey">🔑 OpenAI API Key:</label>
+                <input type="password" id="apiKey" placeholder="Nhập API key của bạn (sk-...)">
+                <small>API key của bạn sẽ được bảo mật và chỉ dùng cho request này. Lấy key tại: <a href="https://platform.openai.com/api-keys" target="_blank">OpenAI Platform</a></small>
+            </div>
+
+            <!-- Error Message -->
+            <div class="error-message" id="errorMessage"></div>
+            
+            <!-- Success Message -->
+            <div class="success-message" id="successMessage"></div>
+
+            <!-- Upload Section -->
+            <div class="upload-section" id="uploadSection">
+                <div class="upload-icon">📸</div>
+                <h3>Tải lên ảnh sản phẩm</h3>
+                <p>Kéo thả ảnh vào đây hoặc click để chọn file</p>
+                <input type="file" id="imageInput" accept="image/*">
+                <button class="btn" onclick="document.getElementById('imageInput').click()">
+                    Chọn ảnh
+                </button>
+            </div>
+
+            <!-- Loading -->
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Đang xử lý...</p>
+            </div>
+
+            <!-- Preview Section -->
+            <div class="preview-section" id="previewSection">
+                <h3>Ảnh đã tải lên:</h3>
+                <img id="previewImage" class="preview-image" alt="Preview">
+                <div style="margin-top: 20px;">
+                    <button class="btn" id="analyzeBtn" onclick="analyzeImage()">
+                        🔍 Phân tích ảnh
+                    </button>
+                </div>
+            </div>
+
+            <!-- Analysis Section -->
+            <div class="analysis-section" id="analysisSection">
+                <div class="analysis-card">
+                    <h3>📊 Kết quả phân tích</h3>
+                    <div id="analysisContent"></div>
+                </div>
+            </div>
+
+            <!-- Prompts Section -->
+            <div class="prompts-section" id="promptsSection">
+                <h3 style="margin-bottom: 20px; color: #667eea;">✨ Chọn prompt để tạo ảnh:</h3>
+                <div id="promptsContainer"></div>
+            </div>
+
+            <!-- Generate Section -->
+            <div class="generate-section" id="generateSection">
+                <button class="btn btn-secondary" onclick="generateImage()">
+                    🎨 Tạo ảnh từ prompt đã chọn
+                </button>
+            </div>
+
+            <!-- Result Section -->
+            <div class="result-section" id="resultSection">
+                <h2 style="color: #667eea; margin-bottom: 30px; text-align: center;">🎉 Kết quả</h2>
+                <div class="result-grid">
+                    <div class="result-card">
+                        <h3>Ảnh gốc</h3>
+                        <img id="originalImage" alt="Original">
+                    </div>
+                    <div class="result-card">
+                        <h3>Ảnh AI đã tạo</h3>
+                        <img id="generatedImage" alt="Generated">
+                        <div class="revised-prompt">
+                            <strong>Prompt đã được tối ưu:</strong>
+                            <p id="revisedPrompt"></p>
+                        </div>
+                    </div>
+                </div>
+                <div style="text-align: center; margin-top: 30px;">
+                    <button class="btn" onclick="resetApp()">
+                        🔄 Phân tích ảnh mới
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentImageFile = null;
+        let currentImageUrl = null;
+        let selectedPrompt = null;
+        let analysisData = null;
+
+        // Drag and drop functionality
+        const uploadSection = document.getElementById('uploadSection');
+        const imageInput = document.getElementById('imageInput');
+
+        uploadSection.addEventListener('click', () => {
+            imageInput.click();
+        });
+
+        uploadSection.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadSection.classList.add('drag-over');
+        });
+
+        uploadSection.addEventListener('dragleave', () => {
+            uploadSection.classList.remove('drag-over');
+        });
+
+        uploadSection.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadSection.classList.remove('drag-over');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFileSelect(files[0]);
+            }
+        });
+
+        imageInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFileSelect(e.target.files[0]);
+            }
+        });
+
+        function handleFileSelect(file) {
+            if (!file.type.startsWith('image/')) {
+                showError('Vui lòng chọn file ảnh!');
+                return;
+            }
+
+            currentImageFile = file;
+            
+            // Show preview
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                document.getElementById('previewImage').src = e.target.result;
+                document.getElementById('previewSection').style.display = 'block';
+                document.getElementById('uploadSection').style.display = 'none';
+                
+                // Hide previous results
+                document.getElementById('analysisSection').style.display = 'none';
+                document.getElementById('promptsSection').style.display = 'none';
+                document.getElementById('generateSection').style.display = 'none';
+                document.getElementById('resultSection').style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function analyzeImage() {
+            const apiKey = document.getElementById('apiKey').value.trim();
+            
+            if (!apiKey) {
+                showError('Vui lòng nhập OpenAI API key!');
+                return;
+            }
+
+            if (!currentImageFile) {
+                showError('Vui lòng chọn ảnh trước!');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('image', currentImageFile);
+            formData.append('apiKey', apiKey);
+
+            showLoading(true);
+            hideError();
+
+            try {
+                const response = await fetch('/api/analyze', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.details || data.error || 'Failed to analyze image');
+                }
+
+                currentImageUrl = data.imageUrl;
+                analysisData = data;
+
+                // Display analysis
+                displayAnalysis(data.analysis);
+
+                // Display prompts
+                displayPrompts(data.prompts);
+
+                showSuccess('Phân tích thành công!');
+
+            } catch (error) {
+                showError('Lỗi: ' + error.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function displayAnalysis(analysis) {
+            const container = document.getElementById('analysisContent');
+            container.innerHTML = '';
+
+            // Handle raw content if parsing failed
+            if (analysis.raw) {
+                const item = document.createElement('div');
+                item.className = 'analysis-item';
+                item.innerHTML = `<p>${analysis.raw.replace(/\n/g, '<br>')}</p>`;
+                container.appendChild(item);
+            } else {
+                // Display structured analysis
+                for (const [key, value] of Object.entries(analysis)) {
+                    const item = document.createElement('div');
+                    item.className = 'analysis-item';
+                    item.innerHTML = `
+                        <strong>${capitalizeFirst(key)}:</strong>
+                        <p>${value}</p>
+                    `;
+                    container.appendChild(item);
+                }
+            }
+
+            document.getElementById('analysisSection').style.display = 'block';
+        }
+
+        function displayPrompts(prompts) {
+            const container = document.getElementById('promptsContainer');
+            container.innerHTML = '';
+
+            if (!prompts || prompts.length === 0) {
+                container.innerHTML = '<p>Không có prompt nào được tạo.</p>';
+                return;
+            }
+
+            prompts.forEach((prompt, index) => {
+                const card = document.createElement('div');
+                card.className = 'prompt-card';
+                card.onclick = () => selectPrompt(index);
+                card.innerHTML = `
+                    <h4>${prompt.title || `Prompt ${index + 1}`}</h4>
+                    <p>${prompt.prompt}</p>
+                `;
+                container.appendChild(card);
+            });
+
+            document.getElementById('promptsSection').style.display = 'block';
+        }
+
+        function selectPrompt(index) {
+            selectedPrompt = analysisData.prompts[index];
+            
+            // Update UI
+            const cards = document.querySelectorAll('.prompt-card');
+            cards.forEach((card, i) => {
+                if (i === index) {
+                    card.classList.add('selected');
+                } else {
+                    card.classList.remove('selected');
+                }
+            });
+
+            document.getElementById('generateSection').style.display = 'block';
+        }
+
+        async function generateImage() {
+            if (!selectedPrompt) {
+                showError('Vui lòng chọn một prompt!');
+                return;
+            }
+
+            const apiKey = document.getElementById('apiKey').value.trim();
+            
+            if (!apiKey) {
+                showError('Vui lòng nhập OpenAI API key!');
+                return;
+            }
+
+            showLoading(true);
+            hideError();
+
+            try {
+                const response = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        prompt: selectedPrompt.prompt,
+                        apiKey: apiKey
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.details || data.error || 'Failed to generate image');
+                }
+
+                // Display results
+                document.getElementById('originalImage').src = currentImageUrl;
+                document.getElementById('generatedImage').src = data.imageUrl;
+                document.getElementById('revisedPrompt').textContent = data.revisedPrompt;
+                
+                document.getElementById('resultSection').style.display = 'block';
+                
+                // Scroll to results
+                document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth' });
+
+                showSuccess('Ảnh đã được tạo thành công!');
+
+            } catch (error) {
+                showError('Lỗi: ' + error.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function resetApp() {
+            currentImageFile = null;
+            currentImageUrl = null;
+            selectedPrompt = null;
+            analysisData = null;
+
+            document.getElementById('imageInput').value = '';
+            document.getElementById('uploadSection').style.display = 'block';
+            document.getElementById('previewSection').style.display = 'none';
+            document.getElementById('analysisSection').style.display = 'none';
+            document.getElementById('promptsSection').style.display = 'none';
+            document.getElementById('generateSection').style.display = 'none';
+            document.getElementById('resultSection').style.display = 'none';
+            
+            hideError();
+            hideSuccess();
+
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            
+            // Scroll to error
+            errorDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        function hideError() {
+            document.getElementById('errorMessage').style.display = 'none';
+        }
+
+        function showSuccess(message) {
+            const successDiv = document.getElementById('successMessage');
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                hideSuccess();
+            }, 5000);
+        }
+
+        function hideSuccess() {
+            document.getElementById('successMessage').style.display = 'none';
+        }
+
+        function capitalizeFirst(str) {
+            return str.charAt(0).toUpperCase() + str.slice(1);
+        }
+    </script>
+</body>
+</html>
