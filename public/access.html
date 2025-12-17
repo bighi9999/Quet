@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Product Analyzer - Access Portal</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            background: white;
+            border-radius: 20px;
+            padding: 50px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            text-align: center;
+        }
+
+        h1 {
+            color: #667eea;
+            font-size: 2.5em;
+            margin-bottom: 20px;
+        }
+
+        .status {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: #10b981;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: 600;
+            margin-bottom: 30px;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            background: white;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .info-box {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 15px;
+            margin: 30px 0;
+            text-align: left;
+        }
+
+        .info-box h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            transition: transform 0.2s;
+        }
+
+        .info-item:hover {
+            transform: translateX(5px);
+        }
+
+        .info-item strong {
+            min-width: 100px;
+            color: #667eea;
+        }
+
+        .url-box {
+            background: #667eea;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            font-family: monospace;
+            font-size: 1.1em;
+            word-break: break-all;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .url-box:hover {
+            background: #5568d3;
+        }
+
+        .btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 40px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1em;
+            margin: 10px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 30px 0;
+        }
+
+        .feature {
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .feature-icon {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .feature h4 {
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .feature p {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .qr-section {
+            margin: 30px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 15px;
+        }
+
+        .qr-section h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .copy-btn {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            margin-left: 10px;
+            transition: background 0.3s;
+        }
+
+        .copy-btn:hover {
+            background: #059669;
+        }
+
+        .copy-btn.copied {
+            background: #3b82f6;
+        }
+
+        .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #e5e7eb;
+            color: #666;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 30px 20px;
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .features {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 AI Product Analyzer</h1>
+        <div class="status">
+            <div class="status-dot"></div>
+            Server Online & Ready
+        </div>
+
+        <div class="info-box">
+            <h3>📡 Public Access URLs</h3>
+            
+            <div class="info-item">
+                <strong>🚀 V2 Pro:</strong>
+                <div class="url-box" onclick="copyUrl('v2Url')">
+                    <span id="v2Url">http://14.225.210.195:3000/v2</span>
+                </div>
+                <button class="copy-btn" onclick="copyUrl('v2Url')">Copy</button>
+            </div>
+
+            <div class="info-item">
+                <strong>📌 V1 Classic:</strong>
+                <div class="url-box" onclick="copyUrl('v1Url')">
+                    <span id="v1Url">http://14.225.210.195:3000/v1</span>
+                </div>
+                <button class="copy-btn" onclick="copyUrl('v1Url')">Copy</button>
+            </div>
+
+            <div class="info-item">
+                <strong>🏠 Homepage:</strong>
+                <div class="url-box" onclick="copyUrl('homeUrl')">
+                    <span id="homeUrl">http://14.225.210.195:3000</span>
+                </div>
+                <button class="copy-btn" onclick="copyUrl('homeUrl')">Copy</button>
+            </div>
+
+            <div class="info-item">
+                <strong>❤️ Health:</strong>
+                <div class="url-box" onclick="copyUrl('healthUrl')">
+                    <span id="healthUrl">http://14.225.210.195:3000/api/health</span>
+                </div>
+                <button class="copy-btn" onclick="copyUrl('healthUrl')">Copy</button>
+            </div>
+        </div>
+
+        <div>
+            <a href="/v2" class="btn">
+                🚀 Launch V2 Pro
+            </a>
+            <a href="/v1" class="btn btn-secondary">
+                📌 Launch V1 Classic
+            </a>
+        </div>
+
+        <div class="features">
+            <div class="feature">
+                <div class="feature-icon">🌓</div>
+                <h4>Dark Mode</h4>
+                <p>V2 Pro</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">💰</div>
+                <h4>Cost Tracker</h4>
+                <p>V2 Pro</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">📚</div>
+                <h4>History</h4>
+                <p>V2 Pro</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">⚙️</div>
+                <h4>Advanced</h4>
+                <p>V2 Pro</p>
+            </div>
+        </div>
+
+        <div class="qr-section">
+            <h3>📱 Mobile Access</h3>
+            <p>Scan QR code or copy URL to access from mobile devices</p>
+            <p style="margin-top: 10px; color: #666;">
+                URL works on any device with internet connection
+            </p>
+        </div>
+
+        <div class="info-box">
+            <h3>ℹ️ Information</h3>
+            <div style="text-align: left; line-height: 1.8;">
+                <p><strong>Status:</strong> Active & Running</p>
+                <p><strong>Version:</strong> V2.0 Pro (with V1 Classic)</p>
+                <p><strong>Access:</strong> Public (temporary sandbox)</p>
+                <p><strong>Features:</strong> 16 total (8 core + 8 pro)</p>
+                <p><strong>Uptime:</strong> Running continuously</p>
+                <p><strong>Security:</strong> API keys not stored</p>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p><strong>Note:</strong> This is a temporary sandbox URL</p>
+            <p>For permanent 24/7 access, deploy to Render.com (free)</p>
+            <p style="margin-top: 10px;">
+                <a href="https://github.com" style="color: #667eea;">📚 View Documentation</a>
+            </p>
+        </div>
+    </div>
+
+    <script>
+        function copyUrl(elementId) {
+            const element = document.getElementById(elementId);
+            const url = element.textContent;
+            
+            // Copy to clipboard
+            navigator.clipboard.writeText(url).then(() => {
+                // Find the copy button
+                const button = element.parentElement.nextElementSibling;
+                const originalText = button.textContent;
+                
+                // Show feedback
+                button.textContent = '✓ Copied!';
+                button.classList.add('copied');
+                
+                // Show alert
+                showNotification('Copied: ' + url);
+                
+                // Reset after 2 seconds
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.classList.remove('copied');
+                }, 2000);
+            }).catch(err => {
+                alert('Failed to copy. Please copy manually: ' + url);
+            });
+        }
+
+        function showNotification(message) {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #10b981;
+                color: white;
+                padding: 15px 25px;
+                border-radius: 10px;
+                box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+                z-index: 1000;
+                animation: slideIn 0.3s ease;
+            `;
+            notification.textContent = message;
+            
+            // Add animation
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes slideIn {
+                    from { transform: translateX(400px); opacity: 0; }
+                    to { transform: translateX(0); opacity: 1; }
+                }
+                @keyframes slideOut {
+                    from { transform: translateX(0); opacity: 1; }
+                    to { transform: translateX(400px); opacity: 0; }
+                }
+            `;
+            document.head.appendChild(style);
+            
+            document.body.appendChild(notification);
+            
+            // Remove after 3 seconds
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        // Check server health on load
+        async function checkHealth() {
+            try {
+                const response = await fetch('/api/health');
+                const data = await response.json();
+                console.log('Server health:', data);
+            } catch (error) {
+                console.error('Health check failed:', error);
+            }
+        }
+
+        // Run health check every 30 seconds
+        checkHealth();
+        setInterval(checkHealth, 30000);
+
+        // Auto-refresh status
+        setInterval(() => {
+            const statusDot = document.querySelector('.status-dot');
+            statusDot.style.animation = 'none';
+            setTimeout(() => {
+                statusDot.style.animation = 'pulse 2s infinite';
+            }, 10);
+        }, 10000);
+    </script>
+</body>
+</html>

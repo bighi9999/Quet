@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Product Image Analyzer V2 - Pro Edition</title>
+    <style>
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --bg-light: #ffffff;
+            --bg-dark: #1a1a2e;
+            --text-light: #333333;
+            --text-dark: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            min-height: 100vh;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        body.dark-mode {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: var(--bg-light);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            transition: background 0.3s ease;
+        }
+
+        body.dark-mode .container {
+            background: var(--bg-dark);
+            color: var(--text-dark);
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .version-badge {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+
+        .dark-mode-toggle {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            padding: 10px 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1.2em;
+            transition: all 0.3s ease;
+        }
+
+        .dark-mode-toggle:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        body.dark-mode .content {
+            color: var(--text-dark);
+        }
+
+        /* Cost Calculator */
+        .cost-calculator {
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        body.dark-mode .cost-calculator {
+            background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+        }
+
+        .cost-item {
+            text-align: center;
+        }
+
+        .cost-item h4 {
+            font-size: 0.9em;
+            margin-bottom: 5px;
+            opacity: 0.8;
+        }
+
+        .cost-item .value {
+            font-size: 1.5em;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        body.dark-mode .cost-item .value {
+            color: #60a5fa;
+        }
+
+        /* API Key Section */
+        .api-key-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        body.dark-mode .api-key-section {
+            background: #2d3748;
+        }
+
+        .api-key-section label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        body.dark-mode .api-key-section label {
+            color: var(--text-dark);
+        }
+
+        .api-key-section input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        body.dark-mode .api-key-section input {
+            background: #1a1a2e;
+            border-color: #4a5568;
+            color: var(--text-dark);
+        }
+
+        .api-key-section input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        /* Upload Section */
+        .upload-section {
+            background: #f8f9fa;
+            border: 3px dashed #ddd;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 30px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        body.dark-mode .upload-section {
+            background: #2d3748;
+            border-color: #4a5568;
+        }
+
+        .upload-section:hover {
+            border-color: var(--primary);
+            background: #f0f0ff;
+        }
+
+        body.dark-mode .upload-section:hover {
+            background: #374151;
+        }
+
+        /* Advanced Options */
+        .advanced-options {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        body.dark-mode .advanced-options {
+            background: #2d3748;
+        }
+
+        .advanced-options h3 {
+            margin-bottom: 20px;
+            color: var(--primary);
+        }
+
+        body.dark-mode .advanced-options h3 {
+            color: #60a5fa;
+        }
+
+        .option-group {
+            margin-bottom: 20px;
+        }
+
+        .option-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        body.dark-mode .option-group label {
+            color: var(--text-dark);
+        }
+
+        .option-group select,
+        .option-group input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+        }
+
+        body.dark-mode .option-group select,
+        body.dark-mode .option-group input[type="number"] {
+            background: #1a1a2e;
+            border-color: #4a5568;
+            color: var(--text-dark);
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 20px;
+        }
+
+        .radio-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Custom Prompt Editor */
+        .custom-prompt-section {
+            display: none;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        body.dark-mode .custom-prompt-section {
+            background: #2d3748;
+        }
+
+        .custom-prompt-section h3 {
+            margin-bottom: 15px;
+            color: var(--primary);
+        }
+
+        body.dark-mode .custom-prompt-section h3 {
+            color: #60a5fa;
+        }
+
+        .custom-prompt-section textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            font-family: inherit;
+            resize: vertical;
+        }
+
+        body.dark-mode .custom-prompt-section textarea {
+            background: #1a1a2e;
+            border-color: #4a5568;
+            color: var(--text-dark);
+        }
+
+        /* History Section */
+        .history-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            display: none;
+        }
+
+        body.dark-mode .history-section {
+            background: #2d3748;
+        }
+
+        .history-section h3 {
+            margin-bottom: 20px;
+            color: var(--primary);
+        }
+
+        body.dark-mode .history-section h3 {
+            color: #60a5fa;
+        }
+
+        .history-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .history-item {
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .history-item:hover {
+            transform: scale(1.05);
+        }
+
+        .history-item img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+        }
+
+        .history-item-info {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 8px;
+            font-size: 0.8em;
+        }
+
+        /* Buttons */
+        .btn {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            margin-left: 10px;
+        }
+
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 0.9em;
+        }
+
+        /* Download Button */
+        .download-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        /* Multi-image Grid */
+        .multi-image-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .image-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        body.dark-mode .image-card {
+            background: #2d3748;
+        }
+
+        .image-card img {
+            width: 100%;
+            height: auto;
+        }
+
+        .image-card-info {
+            padding: 15px;
+        }
+
+        /* Loading spinner */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .cost-calculator {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .version-badge {
+                position: static;
+                display: inline-block;
+                margin-top: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <button class="dark-mode-toggle" onclick="toggleDarkMode()">🌓</button>
+            <h1>🎨 AI Product Image Analyzer</h1>
+            <p>Pro Edition với Advanced Features</p>
+            <span class="version-badge">V2.0 Pro</span>
+        </div>
+
+        <div class="content">
+            <!-- Cost Calculator -->
+            <div class="cost-calculator">
+                <div class="cost-item">
+                    <h4>📊 Analyses Done</h4>
+                    <div class="value" id="analysisCount">0</div>
+                </div>
+                <div class="cost-item">
+                    <h4>🎨 Images Generated</h4>
+                    <div class="value" id="imageCount">0</div>
+                </div>
+                <div class="cost-item">
+                    <h4>💰 Estimated Cost</h4>
+                    <div class="value" id="totalCost">$0.00</div>
+                </div>
+                <div class="cost-item">
+                    <button class="btn btn-small" onclick="resetStats()">Reset Stats</button>
+                </div>
+            </div>
+
+            <!-- API Key Section -->
+            <div class="api-key-section">
+                <label for="apiKey">🔑 OpenAI API Key:</label>
+                <input type="password" id="apiKey" placeholder="Nhập API key của bạn (sk-...)">
+                <small>API key được bảo mật và chỉ dùng cho session này.</small>
+            </div>
+
+            <!-- History Section -->
+            <div class="history-section" id="historySection">
+                <h3>📚 Lịch sử phân tích</h3>
+                <div class="history-grid" id="historyGrid"></div>
+            </div>
+
+            <!-- Upload Section -->
+            <div class="upload-section" id="uploadSection">
+                <div class="upload-icon">📸</div>
+                <h3>Tải lên ảnh sản phẩm</h3>
+                <p>Kéo thả ảnh vào đây hoặc click để chọn file</p>
+                <input type="file" id="imageInput" accept="image/*">
+                <button class="btn" onclick="document.getElementById('imageInput').click()">
+                    Chọn ảnh
+                </button>
+            </div>
+
+            <!-- Loading -->
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p id="loadingText">Đang xử lý...</p>
+            </div>
+
+            <!-- Preview & Analysis -->
+            <div id="previewSection" style="display:none;">
+                <h3>Ảnh đã tải lên:</h3>
+                <img id="previewImage" style="max-width:100%; border-radius:10px; margin:20px 0;">
+                <button class="btn" onclick="analyzeImage()">🔍 Phân tích ảnh</button>
+            </div>
+
+            <!-- Analysis Results -->
+            <div id="analysisSection" style="display:none;">
+                <h3>📊 Kết quả phân tích</h3>
+                <div id="analysisContent"></div>
+            </div>
+
+            <!-- Prompts -->
+            <div id="promptsSection" style="display:none;">
+                <h3>✨ Prompts được tạo:</h3>
+                <div id="promptsContainer"></div>
+                <button class="btn btn-secondary" onclick="toggleCustomPrompt()">
+                    ✏️ Viết prompt tùy chỉnh
+                </button>
+            </div>
+
+            <!-- Custom Prompt Editor -->
+            <div class="custom-prompt-section" id="customPromptSection">
+                <h3>✏️ Custom Prompt</h3>
+                <textarea id="customPromptText" placeholder="Nhập prompt của bạn..."></textarea>
+                <button class="btn" onclick="useCustomPrompt()">Dùng prompt này</button>
+            </div>
+
+            <!-- Advanced Options -->
+            <div class="advanced-options" id="advancedOptions" style="display:none;">
+                <h3>⚙️ Tùy chọn nâng cao</h3>
+                
+                <div class="option-group">
+                    <label>Kích thước ảnh:</label>
+                    <select id="imageSize">
+                        <option value="1024x1024">Square - 1024x1024 (Standard)</option>
+                        <option value="1024x1792">Portrait - 1024x1792 (Tall)</option>
+                        <option value="1792x1024">Landscape - 1792x1024 (Wide)</option>
+                    </select>
+                </div>
+
+                <div class="option-group">
+                    <label>Chất lượng:</label>
+                    <div class="radio-group">
+                        <label class="radio-option">
+                            <input type="radio" name="quality" value="standard" checked>
+                            Standard (~$0.04)
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" name="quality" value="hd">
+                            HD (~$0.08)
+                        </label>
+                    </div>
+                </div>
+
+                <div class="option-group">
+                    <label>Số lượng ảnh (1-4):</label>
+                    <input type="number" id="imageCount" min="1" max="4" value="1">
+                    <small>Chi phí sẽ nhân với số lượng ảnh</small>
+                </div>
+
+                <button class="btn btn-success" onclick="generateImage()">
+                    🎨 Tạo ảnh với cấu hình này
+                </button>
+            </div>
+
+            <!-- Generated Images -->
+            <div id="resultSection" style="display:none;">
+                <h2 style="text-align:center; margin-bottom:30px;">🎉 Kết quả</h2>
+                <div id="resultContent"></div>
+                <div style="text-align:center; margin-top:30px;">
+                    <button class="btn" onclick="resetApp()">🔄 Phân tích ảnh mới</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State management
+        let state = {
+            currentImage: null,
+            currentImageUrl: null,
+            selectedPrompt: null,
+            analysisData: null,
+            history: JSON.parse(localStorage.getItem('analysisHistory') || '[]'),
+            stats: JSON.parse(localStorage.getItem('stats') || '{"analyses": 0, "images": 0, "cost": 0}')
+        };
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            updateStats();
+            loadHistory();
+            setupEventListeners();
+        });
+
+        function setupEventListeners() {
+            const uploadSection = document.getElementById('uploadSection');
+            const imageInput = document.getElementById('imageInput');
+
+            uploadSection.addEventListener('click', () => imageInput.click());
+            
+            uploadSection.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadSection.style.borderColor = '#667eea';
+            });
+
+            uploadSection.addEventListener('dragleave', () => {
+                uploadSection.style.borderColor = '#ddd';
+            });
+
+            uploadSection.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadSection.style.borderColor = '#ddd';
+                if (e.dataTransfer.files.length > 0) {
+                    handleFileSelect(e.dataTransfer.files[0]);
+                }
+            });
+
+            imageInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    handleFileSelect(e.target.files[0]);
+                }
+            });
+        }
+
+        function handleFileSelect(file) {
+            if (!file.type.startsWith('image/')) {
+                alert('Vui lòng chọn file ảnh!');
+                return;
+            }
+
+            state.currentImage = file;
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                document.getElementById('previewImage').src = e.target.result;
+                document.getElementById('previewSection').style.display = 'block';
+                document.getElementById('uploadSection').style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function analyzeImage() {
+            const apiKey = document.getElementById('apiKey').value.trim();
+            
+            if (!apiKey) {
+                alert('Vui lòng nhập OpenAI API key!');
+                return;
+            }
+
+            if (!state.currentImage) {
+                alert('Vui lòng chọn ảnh trước!');
+                return;
+            }
+
+            showLoading('Đang phân tích ảnh...');
+
+            try {
+                const reader = new FileReader();
+                const imageData = await new Promise((resolve, reject) => {
+                    reader.onload = () => resolve(reader.result);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(state.currentImage);
+                });
+
+                const response = await fetch('/api/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ imageData, apiKey })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.details || data.error);
+                }
+
+                state.currentImageUrl = imageData;
+                state.analysisData = data;
+
+                // Update stats
+                state.stats.analyses++;
+                state.stats.cost += 0.01;
+                saveStats();
+                updateStats();
+
+                // Save to history
+                addToHistory(imageData, data);
+
+                displayAnalysis(data.analysis);
+                displayPrompts(data.prompts);
+
+                document.getElementById('analysisSection').style.display = 'block';
+                document.getElementById('promptsSection').style.display = 'block';
+
+            } catch (error) {
+                alert('Lỗi: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function displayAnalysis(analysis) {
+            const container = document.getElementById('analysisContent');
+            container.innerHTML = '';
+
+            for (const [key, value] of Object.entries(analysis)) {
+                const item = document.createElement('div');
+                item.style.marginBottom = '15px';
+                item.innerHTML = `
+                    <strong style="color: #667eea;">${key.toUpperCase()}:</strong>
+                    <p style="margin-top: 5px; line-height: 1.6;">${value}</p>
+                `;
+                container.appendChild(item);
+            }
+        }
+
+        function displayPrompts(prompts) {
+            const container = document.getElementById('promptsContainer');
+            container.innerHTML = '';
+
+            prompts.forEach((prompt, index) => {
+                const card = document.createElement('div');
+                card.style.cssText = 'background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); padding: 20px; border-radius: 10px; margin: 10px 0; cursor: pointer; transition: transform 0.2s;';
+                card.onclick = () => selectPrompt(index);
+                card.innerHTML = `
+                    <h4 style="margin-bottom: 10px;">${prompt.title}</h4>
+                    <p>${prompt.prompt}</p>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function selectPrompt(index) {
+            state.selectedPrompt = state.analysisData.prompts[index];
+            
+            const cards = document.querySelectorAll('#promptsContainer > div');
+            cards.forEach((card, i) => {
+                if (i === index) {
+                    card.style.border = '3px solid #667eea';
+                    card.style.transform = 'scale(1.02)';
+                } else {
+                    card.style.border = 'none';
+                    card.style.transform = 'scale(1)';
+                }
+            });
+
+            document.getElementById('advancedOptions').style.display = 'block';
+            document.getElementById('advancedOptions').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function toggleCustomPrompt() {
+            const section = document.getElementById('customPromptSection');
+            section.style.display = section.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function useCustomPrompt() {
+            const text = document.getElementById('customPromptText').value.trim();
+            if (!text) {
+                alert('Vui lòng nhập prompt!');
+                return;
+            }
+
+            state.selectedPrompt = { title: 'Custom Prompt', prompt: text };
+            document.getElementById('advancedOptions').style.display = 'block';
+            document.getElementById('customPromptSection').style.display = 'none';
+        }
+
+        async function generateImage() {
+            if (!state.selectedPrompt) {
+                alert('Vui lòng chọn hoặc nhập prompt!');
+                return;
+            }
+
+            const apiKey = document.getElementById('apiKey').value.trim();
+            const size = document.getElementById('imageSize').value;
+            const quality = document.querySelector('input[name="quality"]:checked').value;
+            const count = parseInt(document.getElementById('imageCount').value);
+
+            if (!apiKey) {
+                alert('Vui lòng nhập OpenAI API key!');
+                return;
+            }
+
+            showLoading(`Đang tạo ${count} ảnh...`);
+
+            try {
+                const response = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        prompt: state.selectedPrompt.prompt,
+                        apiKey,
+                        size,
+                        quality,
+                        count
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.details || data.error);
+                }
+
+                // Update stats
+                const costPerImage = quality === 'hd' ? 0.08 : 0.04;
+                state.stats.images += data.images.length;
+                state.stats.cost += costPerImage * data.images.length;
+                saveStats();
+                updateStats();
+
+                displayResults(data.images);
+
+            } catch (error) {
+                alert('Lỗi: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function displayResults(images) {
+            const container = document.getElementById('resultContent');
+            container.innerHTML = '';
+
+            // Original image
+            const originalCard = document.createElement('div');
+            originalCard.className = 'image-card';
+            originalCard.innerHTML = `
+                <img src="${state.currentImageUrl}" alt="Original">
+                <div class="image-card-info">
+                    <h3>Ảnh gốc</h3>
+                    <button class="btn btn-small download-btn" onclick="downloadImage('${state.currentImageUrl}', 'original.png')">
+                        📥 Download
+                    </button>
+                </div>
+            `;
+
+            // Generated images
+            const grid = document.createElement('div');
+            grid.className = 'multi-image-grid';
+            grid.appendChild(originalCard);
+
+            images.forEach((img, index) => {
+                const card = document.createElement('div');
+                card.className = 'image-card';
+                card.innerHTML = `
+                    <img src="${img.imageUrl}" alt="Generated ${index + 1}">
+                    <div class="image-card-info">
+                        <h3>Ảnh AI ${index + 1}</h3>
+                        <p style="font-size: 0.9em; margin: 10px 0;">${img.revisedPrompt.substring(0, 100)}...</p>
+                        <button class="btn btn-small download-btn" onclick="downloadImage('${img.imageUrl}', 'generated-${index + 1}.png')">
+                            📥 Download
+                        </button>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+
+            container.appendChild(grid);
+            document.getElementById('resultSection').style.display = 'block';
+            document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function downloadImage(url, filename) {
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+        }
+
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
+        }
+
+        function updateStats() {
+            document.getElementById('analysisCount').textContent = state.stats.analyses;
+            document.getElementById('imageCount').textContent = state.stats.images;
+            document.getElementById('totalCost').textContent = '$' + state.stats.cost.toFixed(2);
+        }
+
+        function saveStats() {
+            localStorage.setItem('stats', JSON.stringify(state.stats));
+        }
+
+        function resetStats() {
+            if (confirm('Reset tất cả thống kê?')) {
+                state.stats = { analyses: 0, images: 0, cost: 0 };
+                saveStats();
+                updateStats();
+            }
+        }
+
+        function addToHistory(imageData, analysis) {
+            state.history.unshift({
+                image: imageData,
+                analysis: analysis,
+                timestamp: Date.now()
+            });
+
+            if (state.history.length > 10) {
+                state.history = state.history.slice(0, 10);
+            }
+
+            localStorage.setItem('analysisHistory', JSON.stringify(state.history));
+            loadHistory();
+        }
+
+        function loadHistory() {
+            const container = document.getElementById('historyGrid');
+            container.innerHTML = '';
+
+            if (state.history.length === 0) {
+                document.getElementById('historySection').style.display = 'none';
+                return;
+            }
+
+            document.getElementById('historySection').style.display = 'block';
+
+            state.history.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = 'history-item';
+                div.onclick = () => loadFromHistory(index);
+                div.innerHTML = `
+                    <img src="${item.image}" alt="History ${index}">
+                    <div class="history-item-info">
+                        ${new Date(item.timestamp).toLocaleDateString()}
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function loadFromHistory(index) {
+            const item = state.history[index];
+            state.currentImageUrl = item.image;
+            state.analysisData = item.analysis;
+
+            document.getElementById('previewImage').src = item.image;
+            document.getElementById('previewSection').style.display = 'block';
+            document.getElementById('uploadSection').style.display = 'none';
+
+            displayAnalysis(item.analysis.analysis);
+            displayPrompts(item.analysis.prompts);
+
+            document.getElementById('analysisSection').style.display = 'block';
+            document.getElementById('promptsSection').style.display = 'block';
+        }
+
+        function resetApp() {
+            state.currentImage = null;
+            state.currentImageUrl = null;
+            state.selectedPrompt = null;
+            state.analysisData = null;
+
+            document.getElementById('imageInput').value = '';
+            document.getElementById('uploadSection').style.display = 'block';
+            document.getElementById('previewSection').style.display = 'none';
+            document.getElementById('analysisSection').style.display = 'none';
+            document.getElementById('promptsSection').style.display = 'none';
+            document.getElementById('advancedOptions').style.display = 'none';
+            document.getElementById('resultSection').style.display = 'none';
+            document.getElementById('customPromptSection').style.display = 'none';
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function showLoading(text) {
+            document.getElementById('loadingText').textContent = text;
+            document.getElementById('loading').style.display = 'block';
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        // Load dark mode preference
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.body.classList.add('dark-mode');
+        }
+    </script>
+</body>
+</html>
