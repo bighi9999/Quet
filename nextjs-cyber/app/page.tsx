@@ -33,6 +33,13 @@ export default function CyberWebapp() {
   const [isGeneratingMarketing, setIsGeneratingMarketing] = useState(false)
   const [isGeneratingModel, setIsGeneratingModel] = useState(false)
   const [generatedModelImage, setGeneratedModelImage] = useState<string>('')
+  const [studioConfig, setStudioConfig] = useState({
+    gender: 'female',
+    ethnicity: 'vietnam',
+    age: 'genz',
+    background: 'studio',
+    aspectRatio: '9:16'
+  })
 
   // Boot sequence animation
   useEffect(() => {
@@ -218,6 +225,53 @@ export default function CyberWebapp() {
     setFashionPrompt(prompt)
   }
 
+  // Build Smart Prompt for Studio
+  const buildStudioPrompt = () => {
+    const genderMap: Record<string, string> = {
+      male: 'male',
+      female: 'female',
+      unisex: 'androgynous'
+    }
+
+    const ethnicityMap: Record<string, string> = {
+      vietnam: 'Vietnamese Asian',
+      western: 'Caucasian',
+      korea: 'Korean',
+      latin: 'Latin American'
+    }
+
+    const ageMap: Record<string, string> = {
+      genz: '22 year old',
+      adult: '28 year old',
+      middle: '38 year old'
+    }
+
+    const backgroundMap: Record<string, string> = {
+      studio: 'professional white studio background with soft lighting',
+      street: 'urban street setting with natural daylight',
+      cafe: 'luxury modern cafe interior with warm ambient lighting',
+      office: 'elegant corporate office with sophisticated backdrop',
+      cyberpunk: 'futuristic cyberpunk neon city at night'
+    }
+
+    const lightingMap: Record<string, string> = {
+      studio: 'soft studio lighting, professional setup',
+      street: 'natural daylight, golden hour',
+      cafe: 'warm ambient lighting, cozy atmosphere',
+      office: 'professional indoor lighting, bright and clean',
+      cyberpunk: 'dramatic neon lighting, high contrast'
+    }
+
+    const productDesc = analysisResult?.productType || 'stylish outfit'
+    const gender = genderMap[studioConfig.gender] || 'female'
+    const ethnicity = ethnicityMap[studioConfig.ethnicity] || 'Asian'
+    const age = ageMap[studioConfig.age] || '25 year old'
+    const background = backgroundMap[studioConfig.background] || 'white studio background'
+    const lighting = lightingMap[studioConfig.background] || 'soft studio lighting'
+
+    return `Full body shot of a ${age} ${ethnicity} ${gender} model wearing ${productDesc}, posing in ${background}, ${lighting}, professional fashion photography, 8k ultra high resolution, photorealistic, detailed skin texture, sharp focus, high fashion editorial style, elegant pose`
+  }
+
   // Handle Generate Model Image with Flux
   const handleGenerateModelImage = async () => {
     if (!analysisResult?.aiPrompt) return
@@ -226,17 +280,26 @@ export default function CyberWebapp() {
     setGeneratedModelImage('')
 
     try {
+      // Build smart prompt from studio config
+      const smartPrompt = buildStudioPrompt()
+
       const response = await fetch('/api/generate-model', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          prompt: analysisResult.aiPrompt
+          prompt: smartPrompt,
+          aspect_ratio: studioConfig.aspectRatio
         })
       })
 
       const data = await response.json()
+
+      if (response.status === 402) {
+        alert('⚠️ Tài khoản Replicate của bạn đã hết tín dụng. Vui lòng nạp thêm để tiếp tục.\n\nTruy cập: https://replicate.com/account/billing')
+        return
+      }
 
       if (data.success) {
         setGeneratedModelImage(data.imageUrl)
@@ -609,50 +672,172 @@ export default function CyberWebapp() {
 
                   {/* Flux Model Generator */}
                   <div className="border border-cyber-primary p-6 glow-border mt-4">
-                    <div className="flex items-center gap-3 mb-4">
+                    <div className="flex items-center gap-3 mb-6">
                       <Sparkles className="w-6 h-6 text-cyber-primary" />
                       <h3 className="text-xl font-bold text-cyber-primary">
                         TẠO ẢNH NGƯỜI MẪU AI (FLUX.1)
                       </h3>
                     </div>
 
+                    {/* Studio Config Panel */}
+                    <div className="border border-cyber-secondary p-4 glow-border-cyan mb-6">
+                      <div className="flex items-center gap-2 mb-4">
+                        <Camera className="w-5 h-5 text-cyber-secondary" />
+                        <h4 className="text-lg font-bold text-cyber-secondary">
+                          CẤU HÌNH STUDIO
+                        </h4>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Gender */}
+                        <div>
+                          <label className="block text-cyber-secondary text-sm mb-2 font-mono">
+                            ► GIỚI TÍNH:
+                          </label>
+                          <select
+                            value={studioConfig.gender}
+                            onChange={(e) => setStudioConfig({...studioConfig, gender: e.target.value})}
+                            className="w-full bg-black border border-cyber-primary text-cyber-primary p-3 font-mono hover:border-cyber-secondary transition-all focus:outline-none focus:border-cyber-secondary focus:shadow-glow-cyan"
+                          >
+                            <option value="female">Nữ (Female)</option>
+                            <option value="male">Nam (Male)</option>
+                            <option value="unisex">Unisex</option>
+                          </select>
+                        </div>
+
+                        {/* Ethnicity */}
+                        <div>
+                          <label className="block text-cyber-secondary text-sm mb-2 font-mono">
+                            ► QUỐC GIA / SẮC TỘC:
+                          </label>
+                          <select
+                            value={studioConfig.ethnicity}
+                            onChange={(e) => setStudioConfig({...studioConfig, ethnicity: e.target.value})}
+                            className="w-full bg-black border border-cyber-primary text-cyber-primary p-3 font-mono hover:border-cyber-secondary transition-all focus:outline-none focus:border-cyber-secondary focus:shadow-glow-cyan"
+                          >
+                            <option value="vietnam">Việt Nam (Asian)</option>
+                            <option value="western">Âu Mỹ (Caucasian)</option>
+                            <option value="korea">Hàn Quốc (Korean)</option>
+                            <option value="latin">Latin (Latin American)</option>
+                          </select>
+                        </div>
+
+                        {/* Age */}
+                        <div>
+                          <label className="block text-cyber-secondary text-sm mb-2 font-mono">
+                            ► ĐỘ TUỔI:
+                          </label>
+                          <select
+                            value={studioConfig.age}
+                            onChange={(e) => setStudioConfig({...studioConfig, age: e.target.value})}
+                            className="w-full bg-black border border-cyber-primary text-cyber-primary p-3 font-mono hover:border-cyber-secondary transition-all focus:outline-none focus:border-cyber-secondary focus:shadow-glow-cyan"
+                          >
+                            <option value="genz">Gen Z (18-24)</option>
+                            <option value="adult">Trưởng thành (25-35)</option>
+                            <option value="middle">Trung niên (35-50)</option>
+                          </select>
+                        </div>
+
+                        {/* Background */}
+                        <div>
+                          <label className="block text-cyber-secondary text-sm mb-2 font-mono">
+                            ► BỐI CẢNH:
+                          </label>
+                          <select
+                            value={studioConfig.background}
+                            onChange={(e) => setStudioConfig({...studioConfig, background: e.target.value})}
+                            className="w-full bg-black border border-cyber-primary text-cyber-primary p-3 font-mono hover:border-cyber-secondary transition-all focus:outline-none focus:border-cyber-secondary focus:shadow-glow-cyan"
+                          >
+                            <option value="studio">Studio Phông Trơn (Xám/Trắng)</option>
+                            <option value="street">Đường Phố</option>
+                            <option value="cafe">Quán Cafe</option>
+                            <option value="office">Văn Phòng Sang Trọng</option>
+                            <option value="cyberpunk">Cyberpunk City</option>
+                          </select>
+                        </div>
+
+                        {/* Aspect Ratio */}
+                        <div className="md:col-span-2">
+                          <label className="block text-cyber-secondary text-sm mb-2 font-mono">
+                            ► TỈ LỆ KHUNG HÌNH:
+                          </label>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                            {[
+                              { value: '9:16', label: '9:16 (TikTok/Story)', icon: '📱' },
+                              { value: '3:4', label: '3:4 (Portrait)', icon: '📷' },
+                              { value: '1:1', label: '1:1 (Vuông)', icon: '🔲' },
+                              { value: '16:9', label: '16:9 (Youtube)', icon: '🎬' }
+                            ].map((ratio) => (
+                              <button
+                                key={ratio.value}
+                                onClick={() => setStudioConfig({...studioConfig, aspectRatio: ratio.value})}
+                                className={`p-3 border font-mono text-xs transition-all ${
+                                  studioConfig.aspectRatio === ratio.value
+                                    ? 'border-cyber-secondary bg-cyber-secondary bg-opacity-20 text-cyber-secondary shadow-glow-cyan'
+                                    : 'border-cyber-primary text-cyber-primary hover:border-cyber-secondary'
+                                }`}
+                              >
+                                <div className="text-lg mb-1">{ratio.icon}</div>
+                                {ratio.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 p-3 border border-cyber-warning bg-cyber-warning bg-opacity-10">
+                        <p className="text-cyber-warning text-xs font-mono">
+                          💡 TIP: Cấu hình này sẽ tự động tạo prompt chuyên nghiệp cho AI Model Generator
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Generate Button */}
                     <button
                       onClick={handleGenerateModelImage}
                       disabled={isGeneratingModel}
-                      className="w-full cyber-button mb-4"
+                      className="w-full cyber-button mb-4 text-lg py-4"
                     >
                       {isGeneratingModel ? (
                         <>
-                          <Loader2 className="w-5 h-5 inline mr-2 animate-spin" />
+                          <Loader2 className="w-6 h-6 inline mr-2 animate-spin" />
                           ĐANG TẠO ẢNH... (30-60s)
                         </>
                       ) : (
                         <>
-                          <Sparkles className="w-5 h-5 inline mr-2" />
-                          ⚡ TẠO ẢNH NGƯỜI MẪU (FLUX)
+                          <Sparkles className="w-6 h-6 inline mr-2" />
+                          ⚡ TẠO ẢNH NGƯỜI MẪU (FLUX.1)
                         </>
                       )}
                     </button>
 
+                    {/* Generated Image Result */}
                     {generatedModelImage && (
                       <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         className="space-y-4"
                       >
-                        <div className="relative border border-cyber-primary glow-border">
-                          <img
-                            src={generatedModelImage}
-                            alt="Generated Model"
-                            className="w-full h-auto"
-                          />
+                        <div className="border border-cyber-secondary p-2 glow-border-cyan">
+                          <div className="relative border border-cyber-primary glow-border">
+                            <img
+                              src={generatedModelImage}
+                              alt="Generated Model"
+                              className="w-full h-auto"
+                            />
+                            <div className="absolute top-2 right-2 bg-black bg-opacity-80 px-3 py-1 border border-cyber-secondary">
+                              <span className="text-cyber-secondary text-xs font-mono">
+                                {studioConfig.aspectRatio}
+                              </span>
+                            </div>
+                          </div>
                         </div>
                         <button
                           onClick={() => downloadImage(generatedModelImage)}
                           className="w-full cyber-button"
                         >
                           <Download className="w-5 h-5 inline mr-2" />
-                          DOWNLOAD HD
+                          DOWNLOAD HD ({studioConfig.aspectRatio})
                         </button>
                       </motion.div>
                     )}

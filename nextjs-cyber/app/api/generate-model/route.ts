@@ -7,7 +7,7 @@ const replicate = new Replicate({
 
 export async function POST(request: NextRequest) {
   try {
-    const { prompt } = await request.json()
+    const { prompt, aspect_ratio = "9:16" } = await request.json()
 
     if (!prompt) {
       return NextResponse.json(
@@ -17,6 +17,7 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('[Flux API] Generating image with prompt:', prompt)
+    console.log('[Flux API] Aspect ratio:', aspect_ratio)
 
     // Call Flux Schnell model
     const output = await replicate.run(
@@ -24,7 +25,7 @@ export async function POST(request: NextRequest) {
       {
         input: {
           prompt: prompt,
-          aspect_ratio: "9:16",
+          aspect_ratio: aspect_ratio,
           output_format: "webp",
           output_quality: 90,
           num_inference_steps: 4
@@ -41,13 +42,28 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       imageUrl: output[0],
-      prompt: prompt
+      prompt: prompt,
+      aspectRatio: aspect_ratio
     })
 
   } catch (error: any) {
     console.error('[Flux API] Error:', error)
+    
+    // Check if it's a billing error (402 Payment Required)
+    if (error.message && error.message.includes('billing') || error.message.includes('credit')) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Tài khoản Replicate đã hết tín dụng',
+          message: 'Vui lòng nạp thêm tín dụng tại https://replicate.com/account/billing'
+        },
+        { status: 402 }
+      )
+    }
+
     return NextResponse.json(
       {
+        success: false,
         error: error.message || 'Failed to generate image',
         details: error.toString()
       },
