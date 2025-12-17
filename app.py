@@ -25,11 +25,12 @@ GROK_API_KEY = os.getenv('GROK_API_KEY')
 # Import services
 try:
     sys.path.insert(0, os.path.dirname(__file__))
-    from services.ai_service import ai_service
+    # Try Gemini Vision first (more reliable)
+    from services.gemini_vision_service import gemini_vision_service
     from services.prompt_builder import prompt_builder
     from utils.image_processor import image_processor
     AI_SERVICE_AVAILABLE = True
-    print("✅ AI services loaded successfully")
+    print("✅ AI services loaded successfully (Gemini Vision)")
 except ImportError as e:
     AI_SERVICE_AVAILABLE = False
     print(f"⚠️ AI services not available: {e}")
@@ -67,8 +68,8 @@ def health():
     }
     
     if AI_SERVICE_AVAILABLE:
-        ai_health = ai_service.health_check()
-        health_data['huggingface'] = ai_health
+        ai_health = gemini_vision_service.health_check()
+        health_data['vision_api'] = ai_health
     
     return jsonify(health_data)
 
@@ -347,9 +348,9 @@ def generate_prompt():
         print("Processing image...")
         processed_image = image_processor.process_image(image_data)
         
-        # Analyze with AI
-        print("Analyzing product image with AI...")
-        analysis = ai_service.analyze_product_image(processed_image, target_audience)
+        # Analyze with AI (Gemini Vision)
+        print("Analyzing product image with Gemini Vision...")
+        analysis = gemini_vision_service.analyze_product_image(processed_image, target_audience)
         
         # Generate prompt
         print("Building optimized prompt...")
