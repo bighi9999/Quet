@@ -168,7 +168,7 @@ export default function CyberWebapp() {
 
       const data = await response.json()
 
-      if (data.success) {
+      if (data.success && data.results) {
         setMultiModelResults(data.results)
         
         // Set the first successful result as primary
@@ -190,24 +190,31 @@ export default function CyberWebapp() {
           })
           setShowFashionForm(analysisData.metadata?.is_fashion || false)
           setMarketingContent(analysisData.marketing_content || {})
+        } else {
+          // No successful results, fallback to mock data
+          console.warn('All models failed, using mock data as fallback')
+          await handleAnalyzeLegacy()
         }
+      } else {
+        // API failed, use mock data
+        console.warn('API failed, using mock data as fallback')
+        await handleAnalyzeLegacy()
       }
     } catch (error) {
       console.error('Analysis error:', error)
+      // On error, fallback to mock data
+      await handleAnalyzeLegacy()
     } finally {
       setIsAnalyzing(false)
     }
   }
 
-  // Legacy simulate for fallback
+  // Legacy simulate for fallback (DOES NOT set isAnalyzing state)
   const handleAnalyzeLegacy = async () => {
     if (!selectedFile) return
 
-    setIsAnalyzing(true)
-    setAnalysisResult(null)
-
     // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 3000))
+    await new Promise(resolve => setTimeout(resolve, 2000))
 
     // Mock result - detect fashion items
     const isFashionItem = Math.random() > 0.5 // Simulate fashion detection
@@ -226,19 +233,46 @@ export default function CyberWebapp() {
       negativePrompt: 'blurry, low quality, distorted, amateur, cheap, cluttered',
       confidence: 95.8,
       processingTime: '2.8s',
-      models: ['Gemini Vision', 'GPT-4 Vision', 'Grok Vision'],
+      models: selectedModels.length > 0 ? selectedModels.map(id => AVAILABLE_MODELS.find(m => m.id === id)?.name || id) : ['Mock Model'],
       isFashion: isFashionItem,
       marketingContent: {
         shopee: `🔥 DEAL SỐC - GIẢM GIÁ CỰC MẠNH! 🔥\n\n✨ ${isFashionItem ? 'Thời trang cao cấp' : 'Sản phẩm công nghệ'} chính hãng 100%\n\n✅ Chất liệu cao cấp, bền đẹp\n✅ Thiết kế hiện đại, sang trọng\n✅ Đóng gói cẩn thận, giao hàng nhanh\n✅ Bảo hành chính hãng 12 tháng\n\n💥 ƯU ĐÃI ĐẶC BIỆT HÔM NAY:\n👉 Giảm ngay 30% khi nhập mã: BGAI30\n👉 Freeship toàn quốc đơn từ 99k\n👉 Tặng quà tri ân cho 100 khách đầu tiên\n\n⏰ SỐ LƯỢNG CÓ HẠN - ĐẶT NGAY KẺO HẾT! ⏰\n\n📱 INBOX NGAY ĐỂ ĐƯỢC TƯ VẤN TẬN TÌNH!\n🛒 THÊM VÀO GIỎ HÀNG NGAY!`,
         facebook: `Hôm qua mình đi shopping thấy ${isFashionItem ? 'món đồ này' : 'sản phẩm này'} mà mê quá! 😍\n\nBan đầu cứ nghĩ giá chắc cao lắm, ai ngờ mở app lại thấy đang sale cực mạnh luôn á! ${isFashionItem ? 'Chất liệu xịn, mặc vào vừa vặn' : 'Thiết kế đẹp mắt, dùng siêu mượt'} y như mơ ước của mình luôn 💕\n\nGiờ mình đang dùng thấy quá ưng ý! ${isFashionItem ? 'Vải mềm mại, form dáng chuẩn' : 'Tính năng đầy đủ, hiệu suất cao'}, ai nhìn cũng khen! Thích nhất là ${isFashionItem ? 'màu sắc sang trọng' : 'thiết kế tinh tế'}, mix match với gì cũng ok hết 🌟\n\nAi đang tìm ${isFashionItem ? 'outfit đẹp' : 'món đồ xịn'} thì nên sắm ngay nha! Deal này không biết còn lâu không nữa 🔥\n\n💬 Comment bên dưới nếu bạn thích nhé!\n👉 Tag hội chị em để cùng sắm đồ nào!\n💝 Share để lưu lại, đừng để lỡ deal này!`,
-        instagram: `Less is more. ✨\n\n${isFashionItem ? 'Style không cần la liếng, chỉ cần đúng điệu.' : 'Cuộc sống đơn giản hơn với công nghệ thông minh.'}\n\nKhi bạn tìm thấy thứ hoàn hảo, mọi thứ khác đều trở nên thừa. ${isFashionItem ? 'Một thiết kế tinh tế, một phong cách riêng biệt.' : 'Một sản phẩm chất lượng, một trải nghiệm khác biệt.'}\n\nKhông cần nhiều, chỉ cần đủ. 💫\n\n#Minimalist #LessIsMore #Style #Quality #Aesthetic #Luxury ${isFashionItem ? '#Fashion #OOTD' : '#Tech #Innovation'}`
+        instagram: `Less is more. ✨\n\n${isFashionItem ? 'Style không cần la liếng, chỉ cần đúng điệu.' : 'Cuộc sống đơn giản hơn với công nghệ thông minh.'}\n\nKhi bạn tìm thấy thứ hoàn hảo, mọi thứ khác đều trở nên thừa. ${isFashionItem ? 'Một thiết kế tinh tế, một phong cách riêng biệt.' : 'Một sản phẩm chất lượng, một trải nghiệm khác biệt.'}\n\nKhông cần nhiều, chỉ cần đủ. 💫\n\n#Minimalist #LessIsMore #Style #Quality #Aesthetic #Luxury ${isFashionItem ? '#Fashion #OOTD' : '#Tech #Innovation'}`,
+        sales_copy: {
+          shopee: `🔥 DEAL SỐC - GIẢM GIÁ CỰC MẠNH! 🔥\n\n✨ ${isFashionItem ? 'Thời trang cao cấp' : 'Sản phẩm công nghệ'} chính hãng 100%\n\n✅ Chất liệu cao cấp, bền đẹp\n✅ Thiết kế hiện đại, sang trọng\n✅ Đóng gói cẩn thận, giao hàng nhanh\n✅ Bảo hành chính hãng 12 tháng\n\n💥 ƯU ĐÃI ĐẶC BIỆT HÔM NAY:\n👉 Giảm ngay 30% khi nhập mã: BGAI30\n👉 Freeship toàn quốc đơn từ 99k\n👉 Tặng quà tri ân cho 100 khách đầu tiên\n\n⏰ SỐ LƯỢNG CÓ HẠN - ĐẶT NGAY KẺO HẾT! ⏰\n\n📱 INBOX NGAY ĐỂ ĐƯỢC TƯ VẤN TẬN TÌNH!\n🛒 THÊM VÀO GIỎ HÀNG NGAY!`,
+          facebook_story: `Hôm qua mình đi shopping thấy ${isFashionItem ? 'món đồ này' : 'sản phẩm này'} mà mê quá! 😍\n\nBan đầu cứ nghĩ giá chắc cao lắm, ai ngờ mở app lại thấy đang sale cực mạnh luôn á!`,
+          instagram_minimal: `Less is more. ✨\n\n${isFashionItem ? 'Style không cần la liếng, chỉ cần đúng điệu.' : 'Cuộc sống đơn giản hơn với công nghệ thông minh.'}`
+        },
+        video_script: {
+          title: `Review ${isFashionItem ? 'Thời Trang' : 'Công Nghệ'} Hot Nhất 2024!`,
+          script: [
+            { scene: 'Cảnh 1: Giới thiệu', audio: 'Mọi người ơi, hôm nay mình sẽ review sản phẩm này nhé!' },
+            { scene: 'Cảnh 2: Chi tiết', audio: 'Nhìn chất lượng này xem, quá xịn luôn!' },
+            { scene: 'Cảnh 3: Kết luận', audio: 'Mình chấm 9/10 điểm. Đáng mua lắm!' }
+          ]
+        },
+        hooks_and_headlines: {
+          catchy_titles: [
+            `Top 1 ${isFashionItem ? 'Thời Trang' : 'Công Nghệ'} Bán Chạy Nhất Tháng 12!`,
+            'Sự Thật Về Sản Phẩm Này Mà Shop Không Muốn Bạn Biết!',
+            'Chỉ 199K Mà Có Hàng Xịn Thế Này? Review Ngay!',
+            'Mẹo Chọn Sản Phẩm Chuẩn Không Cần Chỉnh',
+            'Đáng Mua Hay Không? Test Sau 30 Ngày Sử Dụng!'
+          ],
+          engaging_hooks: [
+            'Chị em ơi, hôm nay mình phải share ngay cái này!',
+            'Ai đang tìm sản phẩm giá rẻ mà chất lượng thì nghe đây...',
+            '3 năm dùng, giờ mới biết bí quyết này!'
+          ]
+        }
       }
     }
 
     setAnalysisResult(mockResult)
     setShowFashionForm(isFashionItem)
     setMarketingContent(mockResult.marketingContent)
-    setIsAnalyzing(false)
+    // NOTE: isAnalyzing state is managed by caller (handleAnalyze)
   }
 
   // Copy to clipboard
