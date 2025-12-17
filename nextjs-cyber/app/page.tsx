@@ -296,15 +296,28 @@ export default function CyberWebapp() {
 
       const data = await response.json()
 
+      // Handle 503 - Model is loading
+      if (response.status === 503) {
+        alert(`⏳ ${data.error || 'Mô hình AI đang khởi động'}\n\n${data.message || 'Vui lòng thử lại sau 20 giây.'}\n\nĐây là lỗi tạm thời do Free Tier của Hugging Face.`)
+        return
+      }
+
+      // Handle 402 - Billing error
       if (response.status === 402) {
-        alert('⚠️ Tài khoản Replicate của bạn đã hết tín dụng. Vui lòng nạp thêm để tiếp tục.\n\nTruy cập: https://replicate.com/account/billing')
+        alert('⚠️ Tài khoản Hugging Face đã vượt quota.\n\nVui lòng kiểm tra tại: https://huggingface.co/settings/billing')
+        return
+      }
+
+      // Handle 500 - Token not configured
+      if (response.status === 500 && data.error?.includes('chưa được cấu hình')) {
+        alert('⚠️ Hugging Face API Token chưa được cấu hình!\n\nVui lòng:\n1. Lấy token tại: https://huggingface.co/settings/tokens\n2. Thêm vào file .env.local:\n   HUGGINGFACE_API_TOKEN=your_token_here\n3. Restart server')
         return
       }
 
       if (data.success) {
         setGeneratedModelImage(data.imageUrl)
       } else {
-        alert(`Lỗi: ${data.error}`)
+        alert(`Lỗi: ${data.error}\n\n${data.message || ''}`)
       }
     } catch (error: any) {
       alert(`Lỗi kết nối: ${error.message}`)
