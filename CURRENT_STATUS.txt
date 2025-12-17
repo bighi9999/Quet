@@ -1,0 +1,76 @@
+╔════════════════════════════════════════════════════════════════╗
+║         🎯 AI PRODUCT ANALYZER V5.2 - STATUS SUMMARY          ║
+╠════════════════════════════════════════════════════════════════╣
+║                                                                ║
+║  🟢 STATUS: ĐANG HOẠT ĐỘNG                                    ║
+║                                                                ║
+║  📍 TRUY CẬP CHÍNH:                                            ║
+║     http://14.225.210.195:5000/v5.html                        ║
+║                                                                ║
+║  📊 THÔNG TIN SERVER:                                          ║
+║     • IP Address: 14.225.210.195                              ║
+║     • Port: 5000                                              ║
+║     • Service: ai-analyzer.service                            ║
+║     • Status: active (running)                                ║
+║     • Uptime: 24/7                                            ║
+║                                                                ║
+║  🔗 CÁC URL KHÁC:                                              ║
+║     • Dashboard: http://14.225.210.195:5000/access-info.html  ║
+║     • Health: http://14.225.210.195:5000/health               ║
+║     • V4 Pro: http://14.225.210.195:5000/v4.html              ║
+║     • V3: http://14.225.210.195:5000/v3.html                  ║
+║                                                                ║
+║  ⚙️ TÍNH NĂNG:                                                 ║
+║     ✅ Selenium Live View - Real-time automation              ║
+║     ✅ Dual Mode - Selenium (free) / API (fast)               ║
+║     ✅ Multi-AI - Gemini, Grok, GPT-4                         ║
+║     ✅ Persistent Auth - Login once                           ║
+║     ✅ Free Tools - BLIP + CLIP                               ║
+║                                                                ║
+║  📚 TÀI LIỆU:                                                  ║
+║     • V5.2_ACCESS_GUIDE.md - Hướng dẫn truy cập chi tiết      ║
+║     • QUICK_LOGIN_GUIDE.md - Hướng dẫn import cookies         ║
+║     • V5_SELENIUM_GUIDE.md - Hướng dẫn Selenium               ║
+║                                                                ║
+║  🐙 GITHUB:                                                    ║
+║     https://github.com/bighi9999/Quet                         ║
+║                                                                ║
+║  ⏰ CẬP NHẬT:                                                   ║
+║     2025-12-17 14:40                                          ║
+║                                                                ║
+╚════════════════════════════════════════════════════════════════╝
+
+🚀 HƯỚNG DẪN NHANH:
+───────────────────
+
+1. MỞ TRÌNH DUYỆT
+   Truy cập: http://14.225.210.195:5000/v5.html
+
+2. CHỌN CHẾ ĐỘ
+   • 🤖 Selenium Mode: MIỄN PHÍ (30-60s, xem Live View)
+   • ⚡ API Mode: NHANH (3-10s, cần API key)
+
+3. UPLOAD ẢNH
+   Chọn ảnh sản phẩm (JPG/PNG/WEBP, max 5MB)
+
+4. PHÂN TÍCH
+   Click "Phân Tích Ngay" và xem kết quả AI
+
+═══════════════════════════════════════════════════════════════════
+
+💡 GỢI Ý:
+─────────
+• Lần đầu dùng → Thử Selenium Mode (miễn phí)
+• Cần nhanh → Dùng API Mode với Gemini (miễn phí + nhanh)
+• Cần chất lượng cao → Dùng GPT-4 (có phí)
+
+═══════════════════════════════════════════════════════════════════
+
+🔧 KHẮC PHỤC SỰ CỐ:
+────────────────────
+• Không truy cập được → Check firewall/port 5000
+• Selenium chậm → Chuyển sang API Mode
+• Service down → sudo systemctl restart ai-analyzer.service
+
+═══════════════════════════════════════════════════════════════════
+🎉 WEBAPP SẴN SÀNG - HÃY TRUY CẬP VÀ SỬ DỤNG! 🎉
