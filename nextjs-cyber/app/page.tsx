@@ -7,7 +7,8 @@ import {
   Activity, Zap, Eye, Brain, Image as ImageIcon,
   Check, AlertCircle, Loader2, Copy, ChevronRight,
   User, MapPin, Calendar, Camera, Globe,
-  Megaphone, ShoppingBag, MessageCircle, Instagram
+  Megaphone, ShoppingBag, MessageCircle, Instagram,
+  Sparkles, Download
 } from 'lucide-react'
 
 export default function CyberWebapp() {
@@ -30,6 +31,8 @@ export default function CyberWebapp() {
   const [showVietnamese, setShowVietnamese] = useState(false)
   const [marketingContent, setMarketingContent] = useState<any>(null)
   const [isGeneratingMarketing, setIsGeneratingMarketing] = useState(false)
+  const [isGeneratingModel, setIsGeneratingModel] = useState(false)
+  const [generatedModelImage, setGeneratedModelImage] = useState<string>('')
 
   // Boot sequence animation
   useEffect(() => {
@@ -213,6 +216,48 @@ export default function CyberWebapp() {
     const productDesc = analysisResult?.productType || 'fashion item'
     const prompt = generateFashionPrompt(productDesc, fashionOptions)
     setFashionPrompt(prompt)
+  }
+
+  // Handle Generate Model Image with Flux
+  const handleGenerateModelImage = async () => {
+    if (!analysisResult?.aiPrompt) return
+
+    setIsGeneratingModel(true)
+    setGeneratedModelImage('')
+
+    try {
+      const response = await fetch('/api/generate-model', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          prompt: analysisResult.aiPrompt
+        })
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        setGeneratedModelImage(data.imageUrl)
+      } else {
+        alert(`Lỗi: ${data.error}`)
+      }
+    } catch (error: any) {
+      alert(`Lỗi kết nối: ${error.message}`)
+    } finally {
+      setIsGeneratingModel(false)
+    }
+  }
+
+  // Download generated image
+  const downloadImage = (url: string) => {
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `bg-ai-model-${Date.now()}.webp`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
   }
 
   // Boot Sequence Screen
@@ -560,6 +605,57 @@ export default function CyberWebapp() {
                     <p className="text-cyber-danger text-sm font-mono">
                       {analysisResult.negativePrompt}
                     </p>
+                  </div>
+
+                  {/* Flux Model Generator */}
+                  <div className="border border-cyber-primary p-6 glow-border mt-4">
+                    <div className="flex items-center gap-3 mb-4">
+                      <Sparkles className="w-6 h-6 text-cyber-primary" />
+                      <h3 className="text-xl font-bold text-cyber-primary">
+                        TẠO ẢNH NGƯỜI MẪU AI (FLUX.1)
+                      </h3>
+                    </div>
+
+                    <button
+                      onClick={handleGenerateModelImage}
+                      disabled={isGeneratingModel}
+                      className="w-full cyber-button mb-4"
+                    >
+                      {isGeneratingModel ? (
+                        <>
+                          <Loader2 className="w-5 h-5 inline mr-2 animate-spin" />
+                          ĐANG TẠO ẢNH... (30-60s)
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-5 h-5 inline mr-2" />
+                          ⚡ TẠO ẢNH NGƯỜI MẪU (FLUX)
+                        </>
+                      )}
+                    </button>
+
+                    {generatedModelImage && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="space-y-4"
+                      >
+                        <div className="relative border border-cyber-primary glow-border">
+                          <img
+                            src={generatedModelImage}
+                            alt="Generated Model"
+                            className="w-full h-auto"
+                          />
+                        </div>
+                        <button
+                          onClick={() => downloadImage(generatedModelImage)}
+                          className="w-full cyber-button"
+                        >
+                          <Download className="w-5 h-5 inline mr-2" />
+                          DOWNLOAD HD
+                        </button>
+                      </motion.div>
+                    )}
                   </div>
 
                   {/* Fashion Model Generator Form */}
