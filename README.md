@@ -1,262 +1,128 @@
-# 🎨 AI Product Image Analyzer & Generator V2 Pro
+# 🎯 AI Product Analyzer
 
-Ứng dụng web sử dụng AI để phân tích ảnh sản phẩm và tạo prompt đề xuất để sinh ảnh mới bằng OpenAI GPT-4 Vision và DALL-E 3. 
+**Unified web application for AI-powered product image analysis and prompt generation**
 
-**🎉 NEW: Version 2.0 Pro Edition - 16 Features Total (8 New!)**
+[![Production Ready](https://img.shields.io/badge/status-production-success)](http://14.225.210.195:5000)
+[![Python](https://img.shields.io/badge/python-3.8+-blue)](https://www.python.org/)
+[![Flask](https://img.shields.io/badge/flask-3.0-green)](https://flask.palletsprojects.com/)
+[![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Version](https://img.shields.io/badge/version-2.0.0-orange.svg)
-![Node](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen.svg)
-![Express](https://img.shields.io/badge/express-4.18.2-lightgrey.svg)
-![Status](https://img.shields.io/badge/status-production--ready-success.svg)
-
----
-
-## 🆕 V2 Pro Edition - What's New?
-
-### 🌓 **Dark Mode** (NEW!)
-- Toggle light/dark themes với một click
-- Preference được lưu tự động
-- Smooth transitions, eye-friendly colors
-
-### 💰 **Cost Calculator** (NEW!)
-- Theo dõi chi phí real-time
-- Đếm số lần analyses và generations
-- Tính tổng chi phí tự động
-- Reset & export history
-
-### 📚 **Analysis History** (NEW!)
-- Lưu 10 analyses gần nhất
-- Thumbnail grid view
-- Click để reload bất kỳ analysis nào
-- Timestamp tracking
-
-### ⚙️ **Advanced Options** (NEW!)
-- **Size**: 1024x1024, 1024x1792, 1792x1024
-- **Quality**: Standard ($0.04) hoặc HD ($0.08)
-- **Quantity**: Generate 1-4 images cùng lúc
-- Sequential generation để tránh rate limit
-
-### ✏️ **Custom Prompt Editor** (NEW!)
-- Text area để edit prompts
-- Modify AI-generated prompts
-- Write từ đầu nếu muốn
-- Works với tất cả advanced options
-
-### 📥 **Download Buttons** (NEW!)
-- Download mọi generated image
-- High-resolution files
-- One-click download
-
-### 🎨 **Multi-Image Grid** (NEW!)
-- Beautiful grid layout
-- Display 1-4 images đẹp mắt
-- Responsive cho mọi screen size
-
-### 💾 **LocalStorage Integration** (NEW!)
-- History persistence
-- Stats tracking across sessions
-- Dark mode preference saved
+**Live Demo**: [http://14.225.210.195:5000](http://14.225.210.195:5000)
 
 ---
 
-## ✨ Core Features (V1 + V2)
+## ✨ Features
 
-### 📸 **Upload & Preview**
-- Kéo thả (drag-and-drop) hoặc click để chọn file
-- Hỗ trợ: JPG, PNG, GIF, WEBP
-- Preview ảnh ngay lập tức
-- Giới hạn: 10MB per file
+### 🎨 AI Product Image Prompt Generator
+Generate optimized prompts for AI image generators from product photos:
+- **Automatic Analysis**: Vision-language AI detects product type, colors, style, features
+- **Smart Prompts**: Creates detailed prompts for realistic human model scenes
+- **Multi-Generator Support**: Optimized for Stable Diffusion, Midjourney, DALL·E
+- **Audience Targeting**: Tailors prompts to specific demographics
+- **Negative Prompts**: Automatically generates quality-control prompts
 
-### 🔍 **AI Image Analysis** (GPT-4 Vision)
-- **Mô tả sản phẩm**: Nhận diện và mô tả sản phẩm trong ảnh
-- **Visual Features**: Phân tích màu sắc, hình dạng, chất liệu, phong cách
-- **Lighting & Composition**: Đánh giá ánh sáng và cách bố cục
-- **Background**: Phân tích background và setting
-- **Overall Quality**: Đánh giá mood và chất lượng tổng thể
-
-### ✨ **Smart Prompt Generation**
-- Tự động tạo **3 prompt sáng tạo** từ phân tích
-- Mỗi prompt được tối ưu cho AI image generation
-- Phù hợp với: DALL-E, Midjourney, Stable Diffusion
-- Click để chọn prompt yêu thích
-
-### 🎨 **AI Image Generation** (DALL-E 3)
-- Tạo ảnh chất lượng cao (multiple sizes)
-- Xem prompt đã được DALL-E tối ưu
-- So sánh side-by-side: Ảnh gốc vs Ảnh AI
-- Download tất cả results
-
-### 💻 **Modern UI/UX**
-- Thiết kế gradient hiện đại
-- Smooth animations & transitions
-- Responsive design (mobile-friendly)
-- Loading states & error handling
-- Trải nghiệm người dùng mượt mà
+### 📊 Product Image Analysis
+Comprehensive AI-powered product analysis:
+- **Multi-AI Support**: Gemini 1.5 Flash, Grok Vision, GPT-4 Vision
+- **Detailed Insights**: Product description, features, target audience
+- **Marketing Strategy**: Actionable marketing recommendations
+- **Image Improvement**: Suggestions for better product photography
 
 ---
 
-## 🚀 Live Demo & Access
+## 🚀 Quick Start
 
-### 🌐 Public URLs (Available 24/7):
+### Prerequisites
+- Python 3.8+
+- Hugging Face API token (free)
+- Optional: Gemini API key, Grok API key, OpenAI API key
 
-| Version | URL | Description |
-|---------|-----|-------------|
-| 🏠 **Access Portal** | [http://14.225.210.195:3000/access](http://14.225.210.195:3000/access) | **START HERE** - Portal với links & guide |
-| 🎨 **V2 Pro** | [http://14.225.210.195:3000/v2](http://14.225.210.195:3000/v2) | **RECOMMENDED** - Full features (16 total) |
-| 📸 **V1 Classic** | [http://14.225.210.195:3000/v1](http://14.225.210.195:3000/v1) | Classic version (8 features) |
-| 🏥 **Health Check** | [http://14.225.210.195:3000/api/health](http://14.225.210.195:3000/api/health) | Server status monitoring |
+### Installation
 
-### ⚡ Server Status:
-- ✅ **Running**: 24/7 with keepalive monitoring
-- ✅ **Auto-Restart**: Enabled (checks every 30s)
-- ✅ **Public Access**: Available from anywhere
-
-> 💡 **Khuyến nghị**: Bắt đầu tại [Access Portal](http://14.225.210.195:3000/access) để có guide đầy đủ!
-
-> ⚠️ **Lưu ý**: Đây là server tạm thời trong sandbox. Để deploy production 24/7 ổn định, hãy xem [Hướng dẫn Deploy](#-deployment).
-
----
-
-## 📋 Yêu cầu
-
-- **Node.js** >= 14.0.0 (khuyến nghị v18+)
-- **npm** >= 6.0.0
-- **OpenAI API Key** ([Lấy tại đây](https://platform.openai.com/api-keys))
-
----
-
-## 🛠️ Cài đặt Local
-
-### 1. Clone repository
 ```bash
-git clone <your-repo-url>
-cd ai-product-image-analyzer
+# Clone repository
+git clone https://github.com/bighi9999/Quet.git
+cd Quet
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Configure environment
+cp .env.example .env
+# Edit .env with your API keys
+
+# Run server
+python app.py
 ```
 
-### 2. Cài đặt dependencies
+Server will start at `http://localhost:5000`
+
+---
+
+## 📁 Project Structure
+
+```
+webapp/
+├── app.py                      # Main Flask application
+├── requirements.txt            # Python dependencies
+├── .env                        # Environment configuration
+│
+├── services/                   # Business logic layer
+│   ├── ai_service.py          # Hugging Face API integration
+│   └── prompt_builder.py      # Prompt generation engine
+│
+├── utils/                      # Utility functions
+│   └── image_processor.py     # Image processing (PIL)
+│
+└── public/                     # Frontend static files
+    ├── index.html             # Main SPA interface
+    ├── styles.css             # Modern gradient UI
+    ├── app.js                 # Vanilla JavaScript
+    └── v4.html                # Legacy analyzer (optional)
+```
+
+---
+
+## 🔧 Configuration
+
+### Environment Variables (.env)
+
 ```bash
-npm install
+# Hugging Face (Required for Prompt Generator)
+HUGGINGFACE_API_TOKEN=hf_your_token_here
+VISION_MODEL=llava-hf/llava-1.5-7b-hf
+
+# Optional AI Services
+GEMINI_API_KEY=your_gemini_key
+GROK_API_KEY=your_grok_key
+
+# Server
+PORT=5000
+NODE_ENV=production
 ```
 
-### 3. Khởi chạy server
-```bash
-npm start
-```
+### Get API Keys
 
-### 4. Mở trình duyệt
-Truy cập: `http://localhost:3000`
+1. **Hugging Face** (Free): [https://huggingface.co/settings/tokens](https://huggingface.co/settings/tokens)
+2. **Gemini** (Free): [https://makersuite.google.com/app/apikey](https://makersuite.google.com/app/apikey)
+3. **Grok**: [https://console.x.ai](https://console.x.ai)
+4. **OpenAI**: [https://platform.openai.com/api-keys](https://platform.openai.com/api-keys)
 
 ---
 
-## 📖 Hướng dẫn sử dụng
+## 🎯 API Endpoints
 
-### Bước 1: Lấy OpenAI API Key
-1. Truy cập [OpenAI Platform](https://platform.openai.com/api-keys)
-2. Đăng nhập hoặc tạo tài khoản
-3. Vào **API Keys** → **Create new secret key**
-4. Copy API key (bắt đầu bằng `sk-...`)
+### AI Prompt Generator
 
-### Bước 2: Nhập API Key
-- Paste API key vào ô input trên trang web
-- Key sẽ được mã hóa và chỉ dùng cho session của bạn
-- Không lưu trữ trên server
-
-### Bước 3: Upload ảnh sản phẩm
-- **Cách 1**: Kéo thả ảnh vào vùng upload
-- **Cách 2**: Click "Chọn ảnh" để browse file
-- Ảnh sẽ được preview ngay lập tức
-
-### Bước 4: Phân tích ảnh
-- Click nút **"🔍 Phân tích ảnh"**
-- AI sẽ phân tích ảnh trong 10-15 giây
-- Xem kết quả phân tích chi tiết
-
-### Bước 5: Chọn prompt
-- Xem 3 prompt được AI tạo ra
-- Click vào prompt bạn thích
-- Prompt sẽ được highlight
-
-### Bước 6: Tạo ảnh AI
-- Click **"🎨 Tạo ảnh từ prompt đã chọn"**
-- Đợi 15-30 giây để DALL-E tạo ảnh
-- Xem so sánh ảnh gốc và ảnh AI
-
-### Bước 7: Phân tích ảnh mới
-- Click **"🔄 Phân tích ảnh mới"** để bắt đầu lại
-
----
-
-## 🏗️ Cấu trúc Project
-
-```
-ai-product-image-analyzer/
-├── index.js              # Main Express server (production)
-├── server.js             # Alternative server (legacy)
-├── package.json          # Dependencies và scripts
-├── public/               # Static files
-│   ├── index.html       # V1 Classic UI
-│   ├── v2.html          # V2 Pro UI (MAIN)
-│   ├── access.html      # Access Portal (ENTRY)
-│   └── functions/       # Cloudflare Pages functions
-├── api/                 # Vercel serverless functions
-│   ├── analyze.js       # Image analysis endpoint
-│   └── generate.js      # Image generation endpoint
-├── functions/           # Cloudflare Workers
-│   └── api/
-├── keepalive.sh         # 24/7 server monitoring script
-├── render.yaml          # Render.com config
-├── railway.json         # Railway.app config
-├── vercel.json          # Vercel config
-├── Procfile             # Heroku config
-├── wrangler.toml        # Cloudflare config
-├── README.md            # Tài liệu chính (file này)
-├── CHANGELOG.md         # Version history
-├── DEPLOYMENT.md        # Deploy guide
-├── V2_FEATURES.md       # V2 Pro features chi tiết
-├── ACCESS_GUIDE.md      # Remote access guide
-├── START_HERE.md        # Quick start guide
-└── V2_SUMMARY.txt       # V2 Pro summary
-```
-
----
-
-## 🌐 Deployment
-
-Ứng dụng có thể deploy miễn phí lên nhiều nền tảng:
-
-### 🎯 Khuyến nghị: Render.com
-```bash
-# 1. Push code lên GitHub
-git add .
-git commit -m "Deploy to Render"
-git push origin main
-
-# 2. Truy cập render.com
-# 3. Kết nối GitHub repo
-# 4. Deploy! 🚀
-```
-
-**Chi tiết đầy đủ:** Xem [DEPLOYMENT.md](./DEPLOYMENT.md)
-
-### Các platform khác:
-- ✅ **Render.com** - Miễn phí, dễ nhất (RECOMMENDED)
-- ✅ **Railway.app** - $5 credit/tháng
-- ✅ **Vercel** - Miễn phí, serverless
-- ✅ **Heroku** - Free tier có giới hạn
-
----
-
-## 🔌 API Endpoints
-
-### `POST /api/analyze`
-Phân tích ảnh sản phẩm và tạo prompts
+#### `POST /api/generate-prompt`
+Generate AI image generation prompt from product image.
 
 **Request:**
 ```json
 {
-  "imageData": "data:image/jpeg;base64,...",
-  "apiKey": "sk-..."
+  "image": "data:image/jpeg;base64,...",
+  "targetAudience": "Female, 25-35 years old, urban lifestyle",
+  "generator": "stable-diffusion"
 }
 ```
 
@@ -264,273 +130,322 @@ Phân tích ảnh sản phẩm và tạo prompts
 ```json
 {
   "success": true,
-  "imageUrl": "data:image/jpeg;base64,...",
-  "analysis": {
-    "description": "...",
-    "features": "...",
-    "lighting": "...",
-    "background": "...",
-    "mood": "..."
-  },
-  "prompts": [
-    {
-      "title": "Prompt Title",
-      "prompt": "Detailed prompt..."
+  "data": {
+    "prompt": "Full body shot of professional female model...",
+    "negativePrompt": "blurry, low quality, distorted...",
+    "metadata": {
+      "productType": "clothing",
+      "style": "modern",
+      "colors": ["red", "black"],
+      "strategy": "full_body_modeling"
+    },
+    "suggestions": [
+      "Try: 'urban street style photoshoot' for edgy look"
+    ],
+    "analysis": {
+      "productType": "clothing",
+      "detectedColors": ["red", "black"],
+      "style": "modern",
+      "confidence": "high"
     }
-  ]
+  }
 }
 ```
 
-### `POST /api/generate`
-Tạo ảnh từ prompt
+#### `GET /api/supported-types`
+Get list of supported product categories and strategies.
 
-**Request:**
-```json
-{
-  "prompt": "Your detailed prompt...",
-  "apiKey": "sk-..."
-}
+### Product Analysis
+
+#### `POST /api/gemini-analyze`
+Analyze product image with Google Gemini 1.5 Flash.
+
+#### `POST /api/grok-analyze`
+Analyze product image with xAI Grok Vision.
+
+#### `POST /api/analyze`
+Analyze product image with OpenAI GPT-4 Vision.
+
+### Utility
+
+#### `GET /api/health`
+Health check and service status.
+
+#### `GET /api/config`
+Check available API configurations.
+
+---
+
+## 💻 Usage Examples
+
+### 1. Generate Prompt for Clothing Product
+
+```javascript
+const formData = {
+  image: "data:image/jpeg;base64,/9j/4AAQSkZJRg...",
+  targetAudience: "Female, 25-35, urban lifestyle, fashion-conscious",
+  generator: "stable-diffusion"
+};
+
+fetch('/api/generate-prompt', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(formData)
+})
+.then(res => res.json())
+.then(data => {
+  console.log('Main Prompt:', data.data.prompt);
+  console.log('Negative Prompt:', data.data.negativePrompt);
+});
 ```
 
-**Response:**
-```json
-{
-  "success": true,
-  "imageUrl": "https://oaidalleapiprodscus.blob.core.windows.net/...",
-  "revisedPrompt": "DALL-E optimized prompt..."
-}
+### 2. Analyze Product with Gemini
+
+```javascript
+fetch('/api/gemini-analyze', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    image: "data:image/jpeg;base64,...",
+    apiKey: "your_gemini_key" // optional if set in .env
+  })
+})
+.then(res => res.json())
+.then(data => {
+  console.log('Analysis:', data.analysis);
+});
 ```
 
-### `GET /api/health`
-Health check endpoint
+---
 
-**Response:**
-```json
-{
-  "status": "ok",
-  "timestamp": "2025-12-16T18:00:00.000Z",
-  "message": "AI Product Image Analyzer is running!"
+## 🎨 Frontend Features
+
+### Modern Single-Page Application
+- **Mode Switching**: Toggle between Prompt Generator and Product Analyzer
+- **Drag & Drop**: Easy image upload with preview
+- **Real-time Validation**: Character counter, file size/type checking
+- **Responsive Design**: Works on desktop, tablet, mobile
+- **Clean UI**: Modern gradient design with smooth animations
+
+### User Experience
+- **Progress Indicators**: Visual feedback during AI processing
+- **One-Click Copy**: Copy prompts to clipboard instantly
+- **Error Handling**: User-friendly error messages
+- **Accessibility**: Keyboard navigation, semantic HTML
+
+---
+
+## 🛠️ Development
+
+### Run in Development Mode
+
+```bash
+# Set debug mode
+export FLASK_ENV=development
+
+# Run with auto-reload
+python app.py
+```
+
+### Tech Stack
+- **Backend**: Flask 3.0, Python 3.8+
+- **Frontend**: Vanilla JavaScript (no frameworks)
+- **AI Services**: Hugging Face Inference API
+- **Image Processing**: Pillow (PIL)
+- **HTTP Client**: Requests
+
+### Code Quality
+- Modular architecture (services, utils)
+- Type hints and docstrings
+- Error handling and logging
+- Environment-based configuration
+
+---
+
+## 🚀 Deployment
+
+### Production Setup
+
+```bash
+# Install dependencies
+pip install -r requirements.txt
+
+# Configure environment
+vim .env  # Set production values
+
+# Run with systemd (recommended)
+sudo systemctl start ai-analyzer.service
+sudo systemctl enable ai-analyzer.service
+```
+
+### Systemd Service
+
+```ini
+[Unit]
+Description=AI Product Image Analyzer - Flask Server
+After=network.target
+
+[Service]
+User=root
+WorkingDirectory=/home/root/webapp
+ExecStart=/usr/bin/python3 /home/root/webapp/app.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+```
+
+### Nginx Reverse Proxy (Optional)
+
+```nginx
+server {
+    listen 80;
+    server_name yourdomain.com;
+
+    location / {
+        proxy_pass http://127.0.0.1:5000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
 }
 ```
 
 ---
 
-## 💰 Chi phí API (V2 Pro với Cost Calculator)
+## 📖 Supported Product Types
 
-### OpenAI API Pricing:
-- **GPT-4 Vision (gpt-4o)**: ~$0.01 per image analysis
-- **DALL-E 3 Standard** (all sizes): ~$0.04 per image
-- **DALL-E 3 HD** (all sizes): ~$0.08 per image
-
-### Cost Examples:
-
-| Workflow | V1 Classic | V2 Pro (Standard) | V2 Pro (HD) |
-|----------|-----------|-------------------|-------------|
-| Analysis only | $0.01 | $0.01 | $0.01 |
-| Analysis + 1 image | $0.05 | $0.05 | $0.09 |
-| Analysis + 2 images | N/A | $0.09 | $0.17 |
-| Analysis + 4 images | N/A | $0.17 | $0.33 |
-
-### 💡 V2 Pro Cost Calculator:
-- ✅ Real-time tracking của mọi operation
-- ✅ Tổng chi phí hiển thị liên tục
-- ✅ Export history để review
-- ✅ Reset stats bất kỳ lúc nào
-
-### Tips tiết kiệm:
-- ✅ Dùng Standard quality cho testing (rẻ hơn 50%)
-- ✅ Generate 1 image trước, xem kết quả
-- ✅ Chỉ dùng HD khi cần quality cao
-- ✅ Review cost calculator trước khi generate nhiều
+| Category | Examples | Prompt Strategy |
+|----------|----------|-----------------|
+| **Clothing** | Shirts, dresses, jackets | Full body modeling shot |
+| **Footwear** | Shoes, sneakers, boots | Full body with focus |
+| **Accessories** | Bags, watches, jewelry | Close-up or lifestyle |
+| **Electronics** | Phones, laptops, cameras | Hands-on demonstration |
+| **Cosmetics** | Makeup, skincare | Beauty application |
+| **Home Goods** | Furniture, decor | Lifestyle scene |
+| **Sports** | Fitness equipment | Action/fitness modeling |
 
 ---
 
-## 🔒 Bảo mật
+## 🔒 Security
 
-### Client-side:
-- ✅ API key chỉ lưu trong memory (không localStorage)
-- ✅ Truyền qua HTTPS
-- ✅ Không gửi lên server của chúng tôi
-
-### Server-side:
-- ✅ Không log API keys
-- ✅ Không lưu trữ ảnh upload
-- ✅ Request timeout để tránh abuse
-- ✅ CORS enabled cho frontend
-
-### Best Practices:
-- 🔐 Không commit API key vào Git
-- 🔐 Sử dụng environment variables khi cần
-- 🔐 Rotate API key thường xuyên
-- 🔐 Monitor API usage trên OpenAI dashboard
-
----
-
-## 🎨 Công nghệ sử dụng
-
-### Backend:
-- **Node.js** - Runtime environment
-- **Express.js** - Web framework
-- **Axios** - HTTP client
-
-### Frontend:
-- **Vanilla JavaScript** - No framework needed!
-- **CSS3** - Gradients, animations, flexbox
-- **HTML5** - Semantic markup
-
-### AI Services:
-- **OpenAI GPT-4 Vision (gpt-4o)** - Image analysis
-- **OpenAI DALL-E 3** - Image generation
-
-### Deployment:
-- **Render.com** - Hosting platform
-- **Railway.app** - Alternative platform
-- **Vercel** - Serverless deployment
-- **Cloudflare Pages** - Edge deployment
-
----
-
-## 📊 Performance
-
-### V1 Classic:
-- **Image Analysis**: 10-15 seconds
-- **Image Generation**: 15-30 seconds
-- **Total workflow**: ~30-45 seconds
-- **Server response time**: < 100ms (excluding AI)
-
-### V2 Pro:
-- **Image Analysis**: 10-15 seconds (same as V1)
-- **1 Image Generation**: 15-30 seconds
-- **2 Images**: ~30-60 seconds (sequential)
-- **4 Images**: ~60-120 seconds (sequential)
-- **Dark Mode Toggle**: Instant
-- **History Load**: < 50ms (localStorage)
-- **Cost Calculator**: Real-time (< 10ms)
+- **Environment Variables**: API keys stored securely in `.env`
+- **Input Validation**: File type, size, and format checking
+- **CORS**: Configured for specific origins
+- **No Data Storage**: Images processed in-memory only
+- **Rate Limiting**: Optional rate limiting middleware
 
 ---
 
 ## 🐛 Troubleshooting
 
-### "No API key provided"
-- **Nguyên nhân**: Chưa nhập API key
-- **Giải pháp**: Nhập OpenAI API key vào ô input
+### Hugging Face API Errors
 
-### "Failed to analyze image"
-- **Nguyên nhân**: 
-  - API key không hợp lệ
-  - Hết quota OpenAI
-  - Network timeout
-- **Giải pháp**:
-  - Kiểm tra API key
-  - Check billing trên OpenAI
-  - Thử lại sau vài giây
+**Problem**: "Model is loading" error
+```
+Solution: Wait 30-60 seconds and retry. Free-tier models cold-start.
+```
 
-### "Image too large"
-- **Nguyên nhân**: File > 10MB
-- **Giải pháp**: Resize ảnh trước khi upload
+**Problem**: "API token not configured"
+```
+Solution: Set HUGGINGFACE_API_TOKEN in .env file
+```
 
-### Server không khởi động
+### Image Upload Issues
+
+**Problem**: "File too large"
+```
+Solution: Compress image or ensure it's under 10MB
+```
+
+**Problem**: "Invalid file type"
+```
+Solution: Use JPG, PNG, or WebP format only
+```
+
+### Service Not Starting
+
 ```bash
-# Kiểm tra port 3000 đã được sử dụng chưa
-lsof -i :3000
+# Check service status
+sudo systemctl status ai-analyzer.service
 
-# Kill process nếu cần
-kill -9 <PID>
+# View logs
+sudo journalctl -u ai-analyzer.service -n 50
 
-# Hoặc đổi port
-PORT=8080 npm start
+# Restart service
+sudo systemctl restart ai-analyzer.service
 ```
 
 ---
 
-## 🔄 Cập nhật & Maintenance
+## 📊 Performance
 
-### Update dependencies:
-```bash
-npm update
-```
-
-### Check for vulnerabilities:
-```bash
-npm audit
-npm audit fix
-```
-
-### Clean install:
-```bash
-rm -rf node_modules package-lock.json
-npm install
-```
-
----
-
-## 📝 Changelog
-
-### Version 2.0.0 - Pro Edition (2025-12-17)
-- 🎉 **MAJOR UPDATE**: V2 Pro Edition released
-- 🌓 Dark mode with persistence
-- 💰 Real-time cost calculator
-- 📚 Analysis history (last 10)
-- ⚙️ Advanced options (size, quality, quantity)
-- ✏️ Custom prompt editor
-- 📥 Download buttons for all images
-- 🎨 Multi-image grid layout (1-4 images)
-- 💾 LocalStorage integration
-- 🚀 Backend supports multiple generations
-- 📱 Enhanced responsive design
-- ✅ V1 Classic still available at `/v1`
-
-### Version 1.0.0 (2025-12-16)
-- ✨ Initial release
-- ✅ Image upload with drag-and-drop
-- ✅ GPT-4 Vision integration for analysis
-- ✅ Auto-generate 3 creative prompts
-- ✅ DALL-E 3 image generation
-- ✅ Side-by-side comparison
-- ✅ Responsive UI
-- ✅ Multiple deployment options
-
-**📋 Full Changelog**: See [CHANGELOG.md](./CHANGELOG.md)
+- **Prompt Generation**: 5-15 seconds (depends on HF API)
+- **Image Processing**: < 1 second
+- **Memory Usage**: ~50MB base + ~200MB per request
+- **Concurrent Requests**: Handles 10+ simultaneous users
 
 ---
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions welcome! Please follow these steps:
 
-1. Fork the project
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+1. Fork the repository
+2. Create feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit changes (`git commit -m 'Add AmazingFeature'`)
+4. Push to branch (`git push origin feature/AmazingFeature`)
+5. Open Pull Request
+
+---
+
+## 📝 Changelog
+
+### v6.0.0 (2025-12-17) - Major Refactor
+- ✨ NEW: AI Product Image Prompt Generator
+- 🔥 REMOVED: Selenium automation (deprecated)
+- 🏗️ REFACTOR: Modular backend architecture
+- 🎨 NEW: Modern unified frontend
+- 📚 IMPROVED: Documentation and examples
+- 🐛 FIX: Multiple bug fixes and improvements
+
+### v5.2.1 (Previous)
+- Selenium Live View feature
+- Persistent authentication
+- Multi-version support (deprecated)
 
 ---
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT License - see [LICENSE](LICENSE) file for details.
+
+---
+
+## 👨‍💻 Author
+
+**AI Product Analyzer Development Team**
+
+- GitHub: [@bighi9999](https://github.com/bighi9999)
+- Repository: [Quet](https://github.com/bighi9999/Quet)
 
 ---
 
 ## 🙏 Acknowledgments
 
-- **OpenAI** - For amazing GPT-4 Vision and DALL-E 3 APIs
-- **Express.js** - For the solid web framework
-- **All contributors** - Thank you!
+- **Hugging Face**: Vision-language AI models
+- **Google**: Gemini API
+- **xAI**: Grok Vision API
+- **OpenAI**: GPT-4 Vision API
+- **Community**: Open-source contributors
 
 ---
 
-## 📞 Support & Contact
+## 📞 Support
 
-- **Issues**: Open an issue on GitHub
-- **Email**: Your email here
-- **Documentation**: See [DEPLOYMENT.md](./DEPLOYMENT.md)
-
----
-
-## 🌟 Show your support
-
-Give a ⭐️ if this project helped you!
+- **Issues**: [GitHub Issues](https://github.com/bighi9999/Quet/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/bighi9999/Quet/discussions)
+- **Live Demo**: [http://14.225.210.195:5000](http://14.225.210.195:5000)
 
 ---
 
