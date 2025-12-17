@@ -1,0 +1,187 @@
+╔═════════════════════════════════════════════════════════════════╗
+║                                                                 ║
+║      🤖 AI PRODUCT ANALYZER V5 - SELENIUM EDITION 🤖           ║
+║                                                                 ║
+║              ✅ DEPLOYMENT 100% COMPLETE ✅                     ║
+║                                                                 ║
+╚═════════════════════════════════════════════════════════════════╝
+
+═══════════════════════════════════════════════════════════════════
+🌐 ACCESS INFORMATION
+═══════════════════════════════════════════════════════════════════
+
+🚀 MAIN URL (V5):
+   http://14.225.210.195:5000/v5.html
+   
+📋 Other Versions:
+   V4: http://14.225.210.195:5000/v4.html
+   V3: http://14.225.210.195:5000/v3.html
+   Homepage: http://14.225.210.195:5000/ (auto-redirect to V5)
+
+═══════════════════════════════════════════════════════════════════
+✨ V5 NEW FEATURES
+═══════════════════════════════════════════════════════════════════
+
+⚡ DUAL MODE OPERATION:
+
+1. 🤖 SELENIUM WEB AUTOMATION MODE
+   ✅ MIỄN PHÍ 100% - Không cần API key
+   ✅ Tự động truy cập trang web AI và lấy kết quả
+   ✅ Support: BLIP, CLIP (Hugging Face)
+   ✅ Auto fallback giữa các providers
+   ⚠️ Chậm hơn (30-60s) và có thể không ổn định
+
+2. 🔑 API MODE (Giống V4)
+   ✅ Gemini AI - Server Key (Miễn phí)
+   ✅ Grok AI - Server Key (Miễn phí)
+   💰 OpenAI GPT-4 - Client Key (Có phí)
+   ⚡ Nhanh và ổn định
+
+═══════════════════════════════════════════════════════════════════
+🔧 NEW API ENDPOINTS
+═══════════════════════════════════════════════════════════════════
+
+1. POST /api/selenium-analyze
+   → Phân tích qua Selenium (không cần API key)
+   
+2. POST /api/selenium-multi
+   → Multi-provider Selenium (thử nhiều tools)
+   
+3. POST /api/selenium/cleanup
+   → Cleanup Selenium drivers (release resources)
+
+═══════════════════════════════════════════════════════════════════
+📊 TECHNICAL STACK
+═══════════════════════════════════════════════════════════════════
+
+Backend:
+  - Flask (Python)
+  - Selenium WebDriver
+  - ChromeDriver (headless)
+  - Google Gemini API
+  - xAI Grok API
+  
+Frontend:
+  - HTML5 + CSS3 (Gradient Dark Theme)
+  - Vanilla JavaScript
+  - Particles.js
+  
+Infrastructure:
+  - Server: Ubuntu 22.04 LTS
+  - IP: 14.225.210.195
+  - Port: 5000 (public)
+  - Auto-start: systemd service
+  
+Automation:
+  - ai_selenium_automation.py
+  - Chrome headless with anti-detection
+  - Auto cleanup temp files
+
+═══════════════════════════════════════════════════════════════════
+🎯 HOW TO USE
+═══════════════════════════════════════════════════════════════════
+
+1. Truy cập: http://14.225.210.195:5000/v5.html
+
+2. Chọn Mode:
+   - 🤖 Selenium Mode: Miễn phí, không cần key
+   - 🔑 API Mode: Nhanh, cần API key
+
+3. Upload ảnh (drag & drop hoặc click)
+
+4. Click "Phân Tích Ngay"
+
+5. Xem kết quả và lưu vào lịch sử
+
+═══════════════════════════════════════════════════════════════════
+⚙️ SERVER MANAGEMENT
+═══════════════════════════════════════════════════════════════════
+
+# Check Status
+sudo systemctl status ai-analyzer
+
+# Restart Service
+sudo systemctl restart ai-analyzer
+
+# View Logs
+sudo journalctl -u ai-analyzer -f
+
+# Check Health
+curl http://localhost:5000/health
+curl http://localhost:5000/api/config
+
+═══════════════════════════════════════════════════════════════════
+📚 DOCUMENTATION
+═══════════════════════════════════════════════════════════════════
+
+Complete Guide: /home/root/webapp/V5_SELENIUM_GUIDE.md
+GitHub: https://github.com/bighi9999/Quet
+Latest Commit: be0aa4f
+
+═══════════════════════════════════════════════════════════════════
+⚠️ IMPORTANT NOTES
+═══════════════════════════════════════════════════════════════════
+
+SELENIUM MODE LIMITATIONS:
+  ❌ Gemini/ChatGPT/Grok web: Yêu cầu authentication
+  ✅ BLIP/CLIP: Free nhưng có thể không ổn định
+  🐢 Chậm: 30-60 giây cho mỗi phân tích
+  ⚠️ Rate limits: Hugging Face có giới hạn
+
+RECOMMENDED:
+  👉 Dùng Selenium Mode cho TEST/DEMO
+  👉 Dùng API Mode cho PRODUCTION
+
+SECURITY:
+  ⚠️ HTTP only (chưa có HTTPS)
+  ⚠️ No authentication
+  ⚠️ API keys stored in .env (not in Git)
+
+═══════════════════════════════════════════════════════════════════
+🚀 TESTING
+═══════════════════════════════════════════════════════════════════
+
+# Test Selenium Endpoint
+curl -X POST http://14.225.210.195:5000/api/selenium-analyze \
+  -H "Content-Type: application/json" \
+  -d '{"image":"data:image/png;base64,...","provider":"auto"}'
+
+# Test API Endpoint  
+curl -X POST http://14.225.210.195:5000/api/gemini-analyze \
+  -H "Content-Type: application/json" \
+  -d '{"image":"data:image/png;base64,...","useServerKey":true}'
+
+# Check Config
+curl http://14.225.210.195:5000/api/config
+
+═══════════════════════════════════════════════════════════════════
+📈 VERSION COMPARISON
+═══════════════════════════════════════════════════════════════════
+
+V3: Multi-AI (Gemini + OpenAI)
+V4: Added Grok, 100% Vietnamese UI
+V5: Added Selenium Web Automation (no API keys needed!)
+
+═══════════════════════════════════════════════════════════════════
+✅ STATUS: 100% READY FOR USE
+═══════════════════════════════════════════════════════════════════
+
+Server: ✅ Running (systemd)
+Port 5000: ✅ Open
+Public IP: ✅ Accessible
+Selenium: ✅ Enabled
+API Keys: ✅ Configured (Gemini + Grok)
+V5 UI: ✅ Deployed
+GitHub: ✅ Pushed (commit be0aa4f)
+
+═══════════════════════════════════════════════════════════════════
+
+🎉 DEPLOYMENT COMPLETE! 🎉
+
+→ Truy cập ngay: http://14.225.210.195:5000/v5.html
+
+═══════════════════════════════════════════════════════════════════
+
+Last Updated: 2025-12-17 14:07 UTC+7
+Deployed by: AI Assistant
+Version: V5 Selenium Edition
