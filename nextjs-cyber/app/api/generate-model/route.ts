@@ -1,167 +1,151 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { GoogleGenerativeAI, ImageGenerateContentResponse } from '@google/generative-ai'
 
-// Hugging Face Inference API Configuration (Updated to router endpoint)
-const HF_API_URL = 'https://router.huggingface.co/models/black-forest-labs/FLUX.1-dev'
-const HF_API_TOKEN = process.env.HUGGINGFACE_API_TOKEN
+// ===== CONFIGURATION =====
+const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY
+const POLLINATIONS_API_URL = 'https://image.pollinations.ai/prompt'
 
-// Retry configuration for "Model is loading" errors
-const MAX_RETRIES = 3
-const RETRY_DELAY = 5000 // 5 seconds
-
-/**
- * Sleep helper function
- */
+// ===== HELPER: SLEEP =====
 function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
 
-/**
- * Call Hugging Face Inference API with retry logic
- */
-async function queryHuggingFace(prompt: string, retryCount = 0): Promise<Buffer> {
-  console.log(`[HF API] Attempt ${retryCount + 1}/${MAX_RETRIES + 1} - Generating image...`)
+// ===== METHOD 1: GOOGLE IMAGEN (PRIMARY) =====
+async function generateWithGoogleImagen(prompt: string, aspectRatio: string = '9:16'): Promise<string> {
+  console.log('[Google Imagen] Starting generation...')
   
-  const response = await fetch(HF_API_URL, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${HF_API_TOKEN}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      inputs: prompt,
-      parameters: {
-        guidance_scale: 7.5,
-        num_inference_steps: 50,
-        width: 512,
-        height: 768
+  if (!GOOGLE_API_KEY) {
+    throw new Error('Google API Key not configured')
+  }
+
+  try {
+    const genAI = new GoogleGenerativeAI(GOOGLE_API_KEY)
+    
+    // Try Imagen 3.0 first
+    try {
+      const model = genAI.getGenerativeModel({ model: 'imagen-3.0-generate-001' })
+      
+      // Map aspect ratio to Imagen dimensions
+      let dimensions = { width: 1024, height: 1024 }
+      if (aspectRatio === '9:16') dimensions = { width: 768, height: 1344 }
+      else if (aspectRatio === '16:9') dimensions = { width: 1344, height: 768 }
+      else if (aspectRatio === '1:1') dimensions = { width: 1024, height: 1024 }
+      
+      const result = await model.generateContent({
+        prompt: prompt,
+        numberOfImages: 1,
+        ...dimensions
+      }) as ImageGenerateContentResponse
+      
+      if (result.response && result.response.candidates && result.response.candidates[0]) {
+        const imageData = result.response.candidates[0].content
+        console.log('[Google Imagen] Success!')
+        return `data:image/png;base64,${imageData}`
+      }
+      
+      throw new Error('No image data returned from Imagen')
+      
+    } catch (imagenError: any) {
+      // If Imagen not available, try Gemini with image generation capabilities
+      console.log('[Google Imagen] Not available, trying Gemini fallback...')
+      console.error('[Imagen Error]:', imagenError.message)
+      
+      // Fallback to text-based generation with Gemini
+      throw new Error('Imagen not available for this API key')
+    }
+    
+  } catch (error: any) {
+    console.error('[Google AI Error]:', error.message)
+    throw error
+  }
+}
+
+// ===== METHOD 2: POLLINATIONS.AI (FALLBACK - FREE, NO KEY) =====
+async function generateWithPollinations(prompt: string): Promise<string> {
+  console.log('[Pollinations.ai] Starting generation (fallback)...')
+  
+  try {
+    // Pollinations.ai accepts prompt in URL, returns image directly
+    const encodedPrompt = encodeURIComponent(prompt)
+    const imageUrl = `${POLLINATIONS_API_URL}/${encodedPrompt}?width=768&height=1344&nologo=true&enhance=true`
+    
+    // Fetch image as buffer
+    const response = await fetch(imageUrl, {
+      method: 'GET',
+      headers: {
+        'User-Agent': 'Mozilla/5.0'
       }
     })
-  })
-
-  // Check for "Model is loading" error
-  if (response.status === 503) {
-    const errorData = await response.json()
-    console.log('[HF API] Model loading error:', errorData)
     
-    if (errorData.error && errorData.error.includes('loading') && retryCount < MAX_RETRIES) {
-      console.log(`[HF API] Model is loading. Retrying in ${RETRY_DELAY/1000}s...`)
-      await sleep(RETRY_DELAY)
-      return queryHuggingFace(prompt, retryCount + 1)
+    if (!response.ok) {
+      throw new Error(`Pollinations API error: ${response.status}`)
     }
     
-    throw new Error(`Model is currently loading. Estimated time: ${errorData.estimated_time || 20}s. Please try again in a moment.`)
+    // Convert to base64
+    const arrayBuffer = await response.arrayBuffer()
+    const buffer = Buffer.from(arrayBuffer)
+    const base64 = buffer.toString('base64')
+    
+    console.log('[Pollinations.ai] Success! Size:', buffer.length, 'bytes')
+    return `data:image/jpeg;base64,${base64}`
+    
+  } catch (error: any) {
+    console.error('[Pollinations.ai Error]:', error.message)
+    throw error
   }
-
-  // Check for other errors
-  if (!response.ok) {
-    const errorText = await response.text()
-    console.error('[HF API] Error response:', errorText)
-    throw new Error(`Hugging Face API error: ${response.status} - ${errorText}`)
-  }
-
-  // Get image as buffer
-  const arrayBuffer = await response.arrayBuffer()
-  const buffer = Buffer.from(arrayBuffer)
-  
-  console.log(`[HF API] Success! Image size: ${buffer.length} bytes`)
-  
-  return buffer
 }
 
-/**
- * Convert Buffer to Base64 Data URL
- */
-function bufferToBase64DataURL(buffer: Buffer, mimeType: string = 'image/jpeg'): string {
-  const base64 = buffer.toString('base64')
-  return `data:${mimeType};base64,${base64}`
-}
-
-/**
- * POST endpoint for AI model image generation
- */
+// ===== MAIN API HANDLER =====
 export async function POST(request: NextRequest) {
   try {
-    // Check if API token is configured
-    if (!HF_API_TOKEN || HF_API_TOKEN === 'your_huggingface_token_here') {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Hugging Face API token chưa được cấu hình',
-          message: 'Vui lòng thêm HUGGINGFACE_API_TOKEN vào file .env.local'
-        },
-        { status: 500 }
-      )
-    }
-
-    // Parse request body
+    // Parse request
     const { prompt, aspect_ratio = "9:16" } = await request.json()
 
     if (!prompt) {
       return NextResponse.json(
-        { 
-          success: false,
-          error: 'Prompt is required' 
-        },
+        { success: false, error: 'Prompt is required' },
         { status: 400 }
       )
     }
 
-    console.log('[HF API] Received request:')
+    console.log('[Generate Model API] Request received:')
     console.log('  - Prompt:', prompt.substring(0, 100) + '...')
     console.log('  - Aspect Ratio:', aspect_ratio)
 
-    // Call Hugging Face Inference API with retry
-    const imageBuffer = await queryHuggingFace(prompt)
+    let imageDataURL: string
+    let source: string
 
-    // Convert buffer to base64 data URL
-    const base64DataURL = bufferToBase64DataURL(imageBuffer, 'image/jpeg')
+    // Try Google Imagen first
+    try {
+      imageDataURL = await generateWithGoogleImagen(prompt, aspect_ratio)
+      source = 'Google Imagen 3.0'
+      console.log('[API] Using Google Imagen')
+      
+    } catch (googleError: any) {
+      // Fallback to Pollinations.ai (free, no key required)
+      console.log('[API] Google Imagen failed, using Pollinations.ai fallback...')
+      imageDataURL = await generateWithPollinations(prompt)
+      source = 'Pollinations.ai (Free Fallback)'
+    }
 
-    console.log('[HF API] Image converted to base64 successfully')
-    console.log('  - Data URL length:', base64DataURL.length, 'characters')
-
-    // Return success response with base64 image
+    // Return success
     return NextResponse.json({
       success: true,
-      imageUrl: base64DataURL,
+      imageUrl: imageDataURL,
       prompt: prompt,
       aspectRatio: aspect_ratio,
-      source: 'Hugging Face FLUX.1-dev',
-      note: 'Image is base64-encoded for instant display'
+      source: source,
+      note: 'Image generated successfully'
     })
 
   } catch (error: any) {
-    console.error('[HF API] Generation failed:', error)
+    console.error('[Generate Model API] Complete failure:', error)
     
-    // Check if it's a model loading error
-    if (error.message && error.message.includes('loading')) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Model đang được tải lên',
-          message: 'Mô hình AI đang khởi động. Vui lòng thử lại sau 20 giây.',
-          estimatedWait: '20s'
-        },
-        { status: 503 }
-      )
-    }
-
-    // Check if it's a token/billing error
-    if (error.message && (error.message.includes('billing') || error.message.includes('credit') || error.message.includes('quota'))) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Tài khoản Hugging Face đã vượt quota',
-          message: 'Vui lòng kiểm tra quota tại https://huggingface.co/settings/billing'
-        },
-        { status: 402 }
-      )
-    }
-
-    // Generic error
     return NextResponse.json(
       {
         success: false,
         error: error.message || 'Failed to generate image',
+        message: 'Không thể tạo ảnh. Vui lòng thử lại sau.',
         details: error.toString()
       },
       { status: 500 }

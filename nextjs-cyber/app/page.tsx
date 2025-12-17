@@ -968,12 +968,12 @@ export default function CyberWebapp() {
                       {isGeneratingModel ? (
                         <>
                           <Loader2 className="w-6 h-6 inline mr-2 animate-spin" />
-                          ĐANG TẠO ẢNH... (30-60s)
+                          ĐANG KẾT NỐI GOOGLE IMAGEN... (10-30s)
                         </>
                       ) : (
                         <>
                           <Sparkles className="w-6 h-6 inline mr-2" />
-                          ⚡ TẠO ẢNH NGƯỜI MẪU (FLUX.1)
+                          ⚡ TẠO ẢNH NGƯỜI MẪU (GOOGLE AI)
                         </>
                       )}
                     </button>
