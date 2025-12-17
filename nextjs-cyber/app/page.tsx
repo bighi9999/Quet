@@ -5,7 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { 
   Terminal, Upload, Cpu, Server, Database, Shield, 
   Activity, Zap, Eye, Brain, Image as ImageIcon,
-  Check, AlertCircle, Loader2, Copy, ChevronRight
+  Check, AlertCircle, Loader2, Copy, ChevronRight,
+  User, MapPin, Calendar, Camera, Globe
 } from 'lucide-react'
 
 export default function CyberWebapp() {
@@ -16,6 +17,16 @@ export default function CyberWebapp() {
   const [isDragging, setIsDragging] = useState(false)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [analysisResult, setAnalysisResult] = useState<any>(null)
+  const [showFashionForm, setShowFashionForm] = useState(false)
+  const [fashionOptions, setFashionOptions] = useState({
+    gender: 'female',
+    ethnicity: 'vietnam',
+    ageGroup: 'genz',
+    background: 'studio',
+    shotType: 'full'
+  })
+  const [fashionPrompt, setFashionPrompt] = useState({ en: '', vi: '' })
+  const [showVietnamese, setShowVietnamese] = useState(false)
 
   // Boot sequence animation
   useEffect(() => {
@@ -89,26 +100,110 @@ export default function CyberWebapp() {
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 3000))
 
-    // Mock result
+    // Mock result - detect fashion items
+    const isFashionItem = Math.random() > 0.5 // Simulate fashion detection
     const mockResult = {
-      productType: 'Electronics Device',
-      keyFeatures: ['High Resolution', 'Modern Design', 'Premium Material'],
+      productType: isFashionItem ? 'Fashion Item' : 'Electronics Device',
+      keyFeatures: isFashionItem 
+        ? ['Premium Material', 'Modern Design', 'Elegant']
+        : ['High Resolution', 'Modern Design', 'Premium Material'],
       colors: ['#000000', '#FF6B00', '#00FF00'],
-      visualStyle: 'Minimalist, Tech-focused, Professional',
-      aiPrompt: 'A sleek modern electronic device with minimalist design, high-tech aesthetic, premium materials, professional photography, studio lighting, 8k resolution, ultra detailed',
+      visualStyle: isFashionItem 
+        ? 'Elegant, Fashion-forward, Professional'
+        : 'Minimalist, Tech-focused, Professional',
+      aiPrompt: isFashionItem
+        ? 'A stylish modern fashion item with elegant design, premium fabric, professional fashion photography, studio lighting, 8k resolution, ultra detailed'
+        : 'A sleek modern electronic device with minimalist design, high-tech aesthetic, premium materials, professional photography, studio lighting, 8k resolution, ultra detailed',
       negativePrompt: 'blurry, low quality, distorted, amateur, cheap, cluttered',
       confidence: 95.8,
       processingTime: '2.8s',
-      models: ['Gemini Vision', 'GPT-4 Vision', 'Grok Vision']
+      models: ['Gemini Vision', 'GPT-4 Vision', 'Grok Vision'],
+      isFashion: isFashionItem
     }
 
     setAnalysisResult(mockResult)
+    setShowFashionForm(isFashionItem)
     setIsAnalyzing(false)
   }
 
   // Copy to clipboard
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text)
+  }
+
+  // Translation dictionary
+  const translations: Record<string, string> = {
+    'High Resolution': 'Độ Phân Giải Cao',
+    'Modern Design': 'Thiết Kế Hiện Đại',
+    'Premium Material': 'Chất Liệu Cao Cấp',
+    'Professional': 'Chuyên Nghiệp',
+    'Minimalist': 'Tối Giản',
+    'Elegant': 'Sang Trọng',
+    'Casual': 'Năng Động',
+    'Luxury': 'Cao Cấp',
+    'Vintage': 'Cổ Điển',
+    'Electronics Device': 'Thiết Bị Điện Tử',
+    'Fashion Item': 'Thời Trang',
+    'Clothing': 'Quần Áo',
+    'Accessories': 'Phụ Kiện',
+    'Footwear': 'Giày Dép'
+  }
+
+  const translateToVietnamese = (text: string): string => {
+    return translations[text] || text
+  }
+
+  // Generate Fashion Model Prompt
+  const generateFashionPrompt = (productDesc: string, options: typeof fashionOptions) => {
+    const genderMap: Record<string, {en: string, vi: string}> = {
+      male: { en: 'male', vi: 'nam' },
+      female: { en: 'female', vi: 'nữ' },
+      unisex: { en: 'unisex', vi: 'unisex' }
+    }
+
+    const ethnicityMap: Record<string, {en: string, vi: string}> = {
+      vietnam: { en: 'Vietnamese', vi: 'Việt Nam' },
+      korea: { en: 'Korean', vi: 'Hàn Quốc' },
+      western: { en: 'Caucasian', vi: 'Âu Mỹ' },
+      latin: { en: 'Latin', vi: 'Latin' }
+    }
+
+    const ageMap: Record<string, {en: string, vi: string}> = {
+      genz: { en: '22 year old', vi: '22 tuổi' },
+      adult: { en: '28 year old', vi: '28 tuổi' },
+      middle: { en: '35 year old', vi: '35 tuổi' }
+    }
+
+    const backgroundMap: Record<string, {en: string, vi: string}> = {
+      studio: { en: 'white studio background', vi: 'studio phông trắng' },
+      saigon: { en: 'urban street in Saigon Vietnam', vi: 'đường phố Sài Gòn' },
+      cafe: { en: 'luxury cafe interior', vi: 'quán cafe sang trọng' },
+      cyberpunk: { en: 'cyberpunk neon studio', vi: 'studio phong cách cyberpunk' }
+    }
+
+    const shotMap: Record<string, {en: string, vi: string}> = {
+      full: { en: 'Full body shot', vi: 'Ảnh chụp toàn thân' },
+      portrait: { en: 'Portrait shot', vi: 'Ảnh chân dung' }
+    }
+
+    const gender = genderMap[options.gender]
+    const ethnicity = ethnicityMap[options.ethnicity]
+    const age = ageMap[options.ageGroup]
+    const background = backgroundMap[options.background]
+    const shot = shotMap[options.shotType]
+
+    const promptEN = `${shot.en} of a ${age.en} ${ethnicity.en} ${gender.en} model wearing ${productDesc}, posing in ${background.en}, professional photography, studio lighting, fashion editorial, 8k resolution, photorealistic, high fashion, detailed texture`
+
+    const promptVI = `${shot.vi} của người mẫu ${gender.vi} ${ethnicity.vi} ${age.vi} mặc ${productDesc}, chụp tại ${background.vi}, nhiếp ảnh chuyên nghiệp, ánh sáng studio, phong cách thời trang cao cấp, độ phân giải 8k, ảnh thực tế, chi tiết sắc nét`
+
+    return { en: promptEN, vi: promptVI }
+  }
+
+  // Handle Fashion Form Submit
+  const handleFashionGenerate = () => {
+    const productDesc = analysisResult?.productType || 'fashion item'
+    const prompt = generateFashionPrompt(productDesc, fashionOptions)
+    setFashionPrompt(prompt)
   }
 
   // Boot Sequence Screen
@@ -380,7 +475,7 @@ export default function CyberWebapp() {
                           LOẠI SẢN PHẨM:
                         </span>
                         <p className="text-cyber-primary font-bold">
-                          {analysisResult.productType}
+                          {translateToVietnamese(analysisResult.productType)}
                         </p>
                       </div>
 
@@ -394,7 +489,7 @@ export default function CyberWebapp() {
                               key={i}
                               className="px-3 py-1 border border-cyber-primary text-cyber-primary text-sm"
                             >
-                              {feature}
+                              {translateToVietnamese(feature)}
                             </span>
                           ))}
                         </div>
@@ -417,12 +512,23 @@ export default function CyberWebapp() {
                       <h4 className="text-lg font-bold text-cyber-accent">
                         PROMPT AI TỐI ƯU
                       </h4>
-                      <button
-                        onClick={() => copyToClipboard(analysisResult.aiPrompt)}
-                        className="p-2 border border-cyber-accent text-cyber-accent hover:bg-cyber-accent hover:text-black transition-all"
-                      >
-                        <Copy className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <label className="flex items-center gap-2 text-xs text-cyber-accent cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={showVietnamese}
+                            onChange={(e) => setShowVietnamese(e.target.checked)}
+                            className="w-4 h-4 bg-transparent border-2 border-cyber-accent appearance-none checked:bg-cyber-accent cursor-pointer"
+                          />
+                          Dịch sang Tiếng Việt
+                        </label>
+                        <button
+                          onClick={() => copyToClipboard(analysisResult.aiPrompt)}
+                          className="p-2 border border-cyber-accent text-cyber-accent hover:bg-cyber-accent hover:text-black transition-all"
+                        >
+                          <Copy className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
                     <p className="text-cyber-primary text-sm font-mono">
                       {analysisResult.aiPrompt}
@@ -446,6 +552,146 @@ export default function CyberWebapp() {
                       {analysisResult.negativePrompt}
                     </p>
                   </div>
+
+                  {/* Fashion Model Generator Form */}
+                  {showFashionForm && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="border border-cyber-warning p-6 glow-border mt-4"
+                    >
+                      <div className="flex items-center gap-3 mb-4">
+                        <User className="w-6 h-6 text-cyber-warning" />
+                        <h3 className="text-xl font-bold text-cyber-warning">
+                          TẠO NGƯỜI MẪU AI
+                        </h3>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        {/* Gender */}
+                        <div>
+                          <label className="block text-cyber-secondary text-sm mb-2">
+                            GIỚI TÍNH:
+                          </label>
+                          <select
+                            value={fashionOptions.gender}
+                            onChange={(e) => setFashionOptions({...fashionOptions, gender: e.target.value})}
+                            className="w-full bg-black border border-cyber-primary text-cyber-primary p-2 font-mono"
+                          >
+                            <option value="male">Nam</option>
+                            <option value="female">Nữ</option>
+                            <option value="unisex">Unisex</option>
+                          </select>
+                        </div>
+
+                        {/* Ethnicity */}
+                        <div>
+                          <label className="block text-cyber-secondary text-sm mb-2">
+                            QUỐC GIA/SẮC TỘC:
+                          </label>
+                          <select
+                            value={fashionOptions.ethnicity}
+                            onChange={(e) => setFashionOptions({...fashionOptions, ethnicity: e.target.value})}
+                            className="w-full bg-black border border-cyber-primary text-cyber-primary p-2 font-mono"
+                          >
+                            <option value="vietnam">Việt Nam</option>
+                            <option value="korea">Hàn Quốc</option>
+                            <option value="western">Âu Mỹ</option>
+                            <option value="latin">Latin</option>
+                          </select>
+                        </div>
+
+                        {/* Age Group */}
+                        <div>
+                          <label className="block text-cyber-secondary text-sm mb-2">
+                            ĐỘ TUỔI:
+                          </label>
+                          <select
+                            value={fashionOptions.ageGroup}
+                            onChange={(e) => setFashionOptions({...fashionOptions, ageGroup: e.target.value})}
+                            className="w-full bg-black border border-cyber-primary text-cyber-primary p-2 font-mono"
+                          >
+                            <option value="genz">Gen Z (18-24)</option>
+                            <option value="adult">Trưởng thành (25-35)</option>
+                            <option value="middle">Trung niên (36-45)</option>
+                          </select>
+                        </div>
+
+                        {/* Background */}
+                        <div>
+                          <label className="block text-cyber-secondary text-sm mb-2">
+                            BỐI CẢNH:
+                          </label>
+                          <select
+                            value={fashionOptions.background}
+                            onChange={(e) => setFashionOptions({...fashionOptions, background: e.target.value})}
+                            className="w-full bg-black border border-cyber-primary text-cyber-primary p-2 font-mono"
+                          >
+                            <option value="studio">Studio Phông Trắng</option>
+                            <option value="saigon">Đường Phố Sài Gòn</option>
+                            <option value="cafe">Cafe Sang Trọng</option>
+                            <option value="cyberpunk">Studio Cyberpunk</option>
+                          </select>
+                        </div>
+
+                        {/* Shot Type */}
+                        <div className="md:col-span-2">
+                          <label className="block text-cyber-secondary text-sm mb-2">
+                            GÓC CHỤP:
+                          </label>
+                          <select
+                            value={fashionOptions.shotType}
+                            onChange={(e) => setFashionOptions({...fashionOptions, shotType: e.target.value})}
+                            className="w-full bg-black border border-cyber-primary text-cyber-primary p-2 font-mono"
+                          >
+                            <option value="full">Toàn thân</option>
+                            <option value="portrait">Chân dung (Nửa người)</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={handleFashionGenerate}
+                        className="w-full cyber-button mb-4"
+                      >
+                        <Camera className="w-5 h-5 inline mr-2" />
+                        TẠO PROMPT NGƯỜI MẪU
+                      </button>
+
+                      {/* Generated Fashion Prompt */}
+                      {fashionPrompt.en && (
+                        <div className="space-y-3">
+                          <div className="border border-cyber-accent p-4 glow-border">
+                            <div className="flex items-center justify-between mb-2">
+                              <h4 className="text-sm font-bold text-cyber-accent">
+                                PROMPT NGƯỜI MẪU (TIẾNG ANH)
+                              </h4>
+                              <button
+                                onClick={() => copyToClipboard(fashionPrompt.en)}
+                                className="p-2 border border-cyber-accent text-cyber-accent hover:bg-cyber-accent hover:text-black transition-all"
+                              >
+                                <Copy className="w-4 h-4" />
+                              </button>
+                            </div>
+                            <p className="text-cyber-accent text-xs font-mono">
+                              {fashionPrompt.en}
+                            </p>
+                          </div>
+
+                          <div className="border border-cyber-secondary p-4 glow-border-cyan">
+                            <div className="flex items-center justify-between mb-2">
+                              <h4 className="text-sm font-bold text-cyber-secondary">
+                                BẢN DỊCH TIẾNG VIỆT (Tham khảo)
+                              </h4>
+                            </div>
+                            <p className="text-cyber-secondary text-xs font-mono">
+                              {fashionPrompt.vi}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </motion.div>
+                  )}
 
                   {/* Processing Info */}
                   <div className="flex items-center justify-between text-sm text-cyber-secondary">
