@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import AnimatedBackground from './components/AnimatedBackground'
 
 export const metadata: Metadata = {
   title: 'BG Ai Tools - Công cụ AI Đa Nền Tảng',
@@ -20,6 +21,9 @@ export default function RootLayout({
         />
       </head>
       <body className="font-mono bg-cyber-bg text-cyber-primary">
+        {/* Animated Cyberpunk Background (Layer -1) */}
+        <AnimatedBackground />
+        
         {/* CRT Screen Effects */}
         <div className="scanline"></div>
         <div className="crt-screen"></div>

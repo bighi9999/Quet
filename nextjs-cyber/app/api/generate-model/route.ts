@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-// Hugging Face Inference API Configuration
-const HF_API_URL = 'https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-dev'
+// Hugging Face Inference API Configuration (Updated to router endpoint)
+const HF_API_URL = 'https://router.huggingface.co/models/black-forest-labs/FLUX.1-dev'
 const HF_API_TOKEN = process.env.HUGGINGFACE_API_TOKEN
 
 // Retry configuration for "Model is loading" errors
