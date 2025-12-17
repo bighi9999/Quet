@@ -40,6 +40,23 @@ export default function CyberWebapp() {
     background: 'studio',
     aspectRatio: '9:16'
   })
+  
+  // New Multi-Model System States
+  const [productName, setProductName] = useState<string>('')
+  const [selectedModels, setSelectedModels] = useState<string[]>(['gemini'])
+  const [multiModelResults, setMultiModelResults] = useState<any[]>([])
+  const [activeResultTab, setActiveResultTab] = useState<number>(0)
+  const [activeMarketingTab, setActiveMarketingTab] = useState<string>('sales')
+  
+  const AVAILABLE_MODELS = [
+    { id: 'gemini', name: 'Gemini 1.5 Flash', provider: 'Google', icon: '🔷' },
+    { id: 'qwen2', name: 'Qwen2-VL-7B', provider: 'Alibaba', icon: '🔶' },
+    { id: 'llama', name: 'Llama 3.2 11B', provider: 'Meta', icon: '🦙' },
+    { id: 'pixtral', name: 'Pixtral 12B', provider: 'Mistral', icon: '🌟' },
+    { id: 'molmo', name: 'Molmo 7B', provider: 'Allen AI', icon: '🧠' },
+    { id: 'phi', name: 'Phi-3.5 Vision', provider: 'Microsoft', icon: '💠' },
+    { id: 'yi', name: 'Yi-VL-34B', provider: '01.AI', icon: '🎯' }
+  ]
 
   // Boot sequence animation
   useEffect(() => {
@@ -103,8 +120,87 @@ export default function CyberWebapp() {
     if (file) handleFileChange(file)
   }
 
-  // Simulate AI analysis
+  // Handle model selection
+  const toggleModel = (modelId: string) => {
+    setSelectedModels(prev => 
+      prev.includes(modelId) 
+        ? prev.filter(id => id !== modelId)
+        : [...prev, modelId]
+    )
+  }
+  
+  const selectAllModels = () => {
+    setSelectedModels(AVAILABLE_MODELS.map(m => m.id))
+  }
+  
+  const deselectAllModels = () => {
+    setSelectedModels(['gemini']) // Keep at least Gemini
+  }
+
+  // Real AI analysis with Multi-Model support
   const handleAnalyze = async () => {
+    if (!selectedFile || selectedModels.length === 0) return
+
+    setIsAnalyzing(true)
+    setAnalysisResult(null)
+    setMultiModelResults([])
+
+    try {
+      // Convert image to base64
+      const reader = new FileReader()
+      const base64Promise = new Promise<string>((resolve) => {
+        reader.onload = (e) => resolve(e.target?.result as string)
+        reader.readAsDataURL(selectedFile)
+      })
+      
+      const imageBase64 = await base64Promise
+
+      // Call multi-model API
+      const response = await fetch('/api/analyze-product', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          imageBase64,
+          selectedModels,
+          productName: productName || undefined
+        })
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        setMultiModelResults(data.results)
+        
+        // Set the first successful result as primary
+        const primaryResult = data.results.find((r: any) => r.success)
+        if (primaryResult?.data) {
+          const analysisData = primaryResult.data
+          setAnalysisResult({
+            productType: analysisData.technical_analysis?.product_type || 'Unknown',
+            keyFeatures: analysisData.technical_analysis?.key_features || [],
+            colors: analysisData.technical_analysis?.colors || ['#000000'],
+            visualStyle: analysisData.technical_analysis?.visual_style || '',
+            aiPrompt: analysisData.ai_prompts?.positive || '',
+            negativePrompt: analysisData.ai_prompts?.negative || '',
+            confidence: analysisData.metadata?.confidence || 85,
+            processingTime: primaryResult.processing_time,
+            models: data.results.map((r: any) => r.model),
+            isFashion: analysisData.metadata?.is_fashion || false,
+            marketingContent: analysisData.marketing_content || {}
+          })
+          setShowFashionForm(analysisData.metadata?.is_fashion || false)
+          setMarketingContent(analysisData.marketing_content || {})
+        }
+      }
+    } catch (error) {
+      console.error('Analysis error:', error)
+    } finally {
+      setIsAnalyzing(false)
+    }
+  }
+
+  // Legacy simulate for fallback
+  const handleAnalyzeLegacy = async () => {
     if (!selectedFile) return
 
     setIsAnalyzing(true)
@@ -547,16 +643,92 @@ export default function CyberWebapp() {
                     alt="Preview"
                     className="w-full h-64 object-contain border border-cyber-primary"
                   />
+                  
+                  {/* Product Name Input */}
+                  <div className="space-y-2">
+                    <label className="text-cyber-secondary text-sm font-mono">
+                      📝 TÊN SẢN PHẨM (Tùy chọn):
+                    </label>
+                    <input
+                      type="text"
+                      value={productName}
+                      onChange={(e) => setProductName(e.target.value)}
+                      placeholder="VD: Son BlackRouge A12, Tai nghe Sony WH-1000XM5..."
+                      className="w-full bg-black border border-cyber-primary text-cyber-primary px-4 py-2 font-mono text-sm focus:outline-none focus:border-cyber-secondary transition-colors"
+                      style={{ boxShadow: '0 0 10px rgba(0, 255, 0, 0.2)' }}
+                    />
+                    <p className="text-cyber-secondary text-xs">
+                      💡 Nhập tên giúp AI viết nội dung chính xác hơn. Bỏ trống nếu muốn AI tự đoán.
+                    </p>
+                  </div>
+
+                  {/* Model Selector */}
+                  <div className="border border-cyber-secondary p-4 space-y-3" style={{ background: 'rgba(0, 255, 255, 0.05)' }}>
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-cyber-secondary font-bold text-sm">
+                        🤖 CHỌN MÔ HÌNH AI ({selectedModels.length}/{AVAILABLE_MODELS.length})
+                      </h4>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={selectAllModels}
+                          className="text-xs px-2 py-1 border border-cyber-primary text-cyber-primary hover:bg-cyber-primary hover:text-black transition-colors"
+                        >
+                          TẤT CẢ
+                        </button>
+                        <button
+                          onClick={deselectAllModels}
+                          className="text-xs px-2 py-1 border border-cyber-secondary text-cyber-secondary hover:bg-cyber-secondary hover:text-black transition-colors"
+                        >
+                          BỎ CHỌN
+                        </button>
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-2">
+                      {AVAILABLE_MODELS.map((model) => (
+                        <label
+                          key={model.id}
+                          className={`flex items-center gap-2 p-2 border cursor-pointer transition-all ${
+                            selectedModels.includes(model.id)
+                              ? 'border-cyber-primary bg-cyber-primary bg-opacity-10'
+                              : 'border-cyber-secondary hover:border-cyber-primary'
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedModels.includes(model.id)}
+                            onChange={() => toggleModel(model.id)}
+                            className="w-4 h-4"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="text-cyber-primary text-xs font-bold truncate">
+                              {model.icon} {model.name}
+                            </div>
+                            <div className="text-cyber-secondary text-xs truncate">
+                              {model.provider}
+                            </div>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                    
+                    {selectedModels.length === 0 && (
+                      <p className="text-cyber-warning text-xs text-center">
+                        ⚠️ Vui lòng chọn ít nhất 1 mô hình
+                      </p>
+                    )}
+                  </div>
+                  
                   <div className="flex gap-4">
                     <button
                       onClick={handleAnalyze}
-                      disabled={isAnalyzing}
-                      className="flex-1 cyber-button"
+                      disabled={isAnalyzing || selectedModels.length === 0}
+                      className="flex-1 cyber-button disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isAnalyzing ? (
                         <>
                           <Loader2 className="w-5 h-5 inline mr-2 animate-spin" />
-                          ĐANG PHÂN TÍCH...
+                          ĐANG PHÂN TÍCH ({selectedModels.length} MÔ HÌNH)...
                         </>
                       ) : (
                         <>
@@ -996,7 +1168,7 @@ export default function CyberWebapp() {
                     </motion.div>
                   )}
 
-                  {/* Marketing Content Section */}
+                  {/* Enhanced Marketing Content Section with Tabs */}
                   {marketingContent && (
                     <motion.div
                       initial={{ opacity: 0, y: 20 }}
@@ -1010,73 +1182,201 @@ export default function CyberWebapp() {
                         </h3>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {/* Shopee/E-commerce Style */}
-                        <div className="border border-cyber-primary p-4 glow-border">
-                          <div className="flex items-center gap-2 mb-3">
-                            <ShoppingBag className="w-5 h-5 text-cyber-primary" />
-                            <h4 className="text-sm font-bold text-cyber-primary">
-                              SHOPEE / E-COMMERCE
-                            </h4>
-                          </div>
-                          <div className="relative">
-                            <p className="text-cyber-primary text-xs font-mono whitespace-pre-line h-64 overflow-y-auto">
-                              {marketingContent.shopee}
-                            </p>
-                            <button
-                              onClick={() => copyToClipboard(marketingContent.shopee)}
-                              className="absolute top-2 right-2 p-2 border border-cyber-primary text-cyber-primary hover:bg-cyber-primary hover:text-black transition-all"
-                              title="Copy Shopee Content"
-                            >
-                              <Copy className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* Facebook/TikTok Style */}
-                        <div className="border border-cyber-secondary p-4 glow-border-cyan">
-                          <div className="flex items-center gap-2 mb-3">
-                            <MessageCircle className="w-5 h-5 text-cyber-secondary" />
-                            <h4 className="text-sm font-bold text-cyber-secondary">
-                              FACEBOOK / TIKTOK
-                            </h4>
-                          </div>
-                          <div className="relative">
-                            <p className="text-cyber-secondary text-xs font-mono whitespace-pre-line h-64 overflow-y-auto">
-                              {marketingContent.facebook}
-                            </p>
-                            <button
-                              onClick={() => copyToClipboard(marketingContent.facebook)}
-                              className="absolute top-2 right-2 p-2 border border-cyber-secondary text-cyber-secondary hover:bg-cyber-secondary hover:text-black transition-all"
-                              title="Copy Facebook Content"
-                            >
-                              <Copy className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* Instagram/Luxury Style */}
-                        <div className="border border-cyber-accent p-4 glow-border">
-                          <div className="flex items-center gap-2 mb-3">
-                            <Instagram className="w-5 h-5 text-cyber-accent" />
-                            <h4 className="text-sm font-bold text-cyber-accent">
-                              INSTAGRAM / LUXURY
-                            </h4>
-                          </div>
-                          <div className="relative">
-                            <p className="text-cyber-accent text-xs font-mono whitespace-pre-line h-64 overflow-y-auto">
-                              {marketingContent.instagram}
-                            </p>
-                            <button
-                              onClick={() => copyToClipboard(marketingContent.instagram)}
-                              className="absolute top-2 right-2 p-2 border border-cyber-accent text-cyber-accent hover:bg-cyber-accent hover:text-black transition-all"
-                              title="Copy Instagram Content"
-                            >
-                              <Copy className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </div>
+                      {/* Tab Navigation */}
+                      <div className="flex gap-2 mb-6 border-b border-cyber-secondary pb-2">
+                        <button
+                          onClick={() => setActiveMarketingTab('sales')}
+                          className={`px-4 py-2 text-sm font-bold transition-all ${
+                            activeMarketingTab === 'sales'
+                              ? 'bg-cyber-primary text-black'
+                              : 'text-cyber-primary border border-cyber-primary hover:bg-cyber-primary hover:bg-opacity-20'
+                          }`}
+                        >
+                          📢 BÁN HÀNG
+                        </button>
+                        <button
+                          onClick={() => setActiveMarketingTab('video')}
+                          className={`px-4 py-2 text-sm font-bold transition-all ${
+                            activeMarketingTab === 'video'
+                              ? 'bg-cyber-secondary text-black'
+                              : 'text-cyber-secondary border border-cyber-secondary hover:bg-cyber-secondary hover:bg-opacity-20'
+                          }`}
+                        >
+                          🎬 KỊCH BẢN VIDEO
+                        </button>
+                        <button
+                          onClick={() => setActiveMarketingTab('hooks')}
+                          className={`px-4 py-2 text-sm font-bold transition-all ${
+                            activeMarketingTab === 'hooks'
+                              ? 'bg-cyber-accent text-black'
+                              : 'text-cyber-accent border border-cyber-accent hover:bg-cyber-accent hover:bg-opacity-20'
+                          }`}
+                        >
+                          🎯 TIÊU ĐỀ & HOOK
+                        </button>
                       </div>
+
+                      {/* Tab Content */}
+                      {activeMarketingTab === 'sales' && (
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          {/* Shopee Style */}
+                          <div className="border border-cyber-primary p-4 glow-border">
+                            <div className="flex items-center gap-2 mb-3">
+                              <ShoppingBag className="w-5 h-5 text-cyber-primary" />
+                              <h4 className="text-sm font-bold text-cyber-primary">
+                                SHOPEE / E-COMMERCE
+                              </h4>
+                            </div>
+                            <div className="relative">
+                              <p className="text-cyber-primary text-xs font-mono whitespace-pre-line h-64 overflow-y-auto pr-8">
+                                {marketingContent.sales_copy?.shopee || marketingContent.shopee || 'Đang chờ dữ liệu từ AI...'}
+                              </p>
+                              <button
+                                onClick={() => copyToClipboard(marketingContent.sales_copy?.shopee || marketingContent.shopee || '')}
+                                className="absolute top-2 right-2 p-2 border border-cyber-primary text-cyber-primary hover:bg-cyber-primary hover:text-black transition-all"
+                              >
+                                <Copy className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Facebook Story */}
+                          <div className="border border-cyber-secondary p-4 glow-border-cyan">
+                            <div className="flex items-center gap-2 mb-3">
+                              <MessageCircle className="w-5 h-5 text-cyber-secondary" />
+                              <h4 className="text-sm font-bold text-cyber-secondary">
+                                FACEBOOK / TIKTOK
+                              </h4>
+                            </div>
+                            <div className="relative">
+                              <p className="text-cyber-secondary text-xs font-mono whitespace-pre-line h-64 overflow-y-auto pr-8">
+                                {marketingContent.sales_copy?.facebook_story || marketingContent.facebook || 'Đang chờ dữ liệu từ AI...'}
+                              </p>
+                              <button
+                                onClick={() => copyToClipboard(marketingContent.sales_copy?.facebook_story || marketingContent.facebook || '')}
+                                className="absolute top-2 right-2 p-2 border border-cyber-secondary text-cyber-secondary hover:bg-cyber-secondary hover:text-black transition-all"
+                              >
+                                <Copy className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Instagram Minimal */}
+                          <div className="border border-cyber-accent p-4 glow-border">
+                            <div className="flex items-center gap-2 mb-3">
+                              <Instagram className="w-5 h-5 text-cyber-accent" />
+                              <h4 className="text-sm font-bold text-cyber-accent">
+                                INSTAGRAM / LUXURY
+                              </h4>
+                            </div>
+                            <div className="relative">
+                              <p className="text-cyber-accent text-xs font-mono whitespace-pre-line h-64 overflow-y-auto pr-8">
+                                {marketingContent.sales_copy?.instagram_minimal || marketingContent.instagram || 'Đang chờ dữ liệu từ AI...'}
+                              </p>
+                              <button
+                                onClick={() => copyToClipboard(marketingContent.sales_copy?.instagram_minimal || marketingContent.instagram || '')}
+                                className="absolute top-2 right-2 p-2 border border-cyber-accent text-cyber-accent hover:bg-cyber-accent hover:text-black transition-all"
+                              >
+                                <Copy className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {activeMarketingTab === 'video' && (
+                        <div className="border border-cyber-secondary p-6 glow-border-cyan">
+                          <h4 className="text-lg font-bold text-cyber-secondary mb-4">
+                            🎬 {marketingContent.video_script?.title || 'Kịch Bản Video Review'}
+                          </h4>
+                          {marketingContent.video_script?.script ? (
+                            <div className="space-y-4">
+                              {marketingContent.video_script.script.map((scene: any, idx: number) => (
+                                <div key={idx} className="border border-cyber-secondary p-4 bg-black bg-opacity-30">
+                                  <div className="flex items-start gap-3">
+                                    <div className="text-cyber-warning font-bold text-sm min-w-[100px]">
+                                      {scene.scene}
+                                    </div>
+                                    <div className="flex-1">
+                                      <p className="text-cyber-primary text-sm font-mono">{scene.audio}</p>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                              <button
+                                onClick={() => {
+                                  const fullScript = marketingContent.video_script.script
+                                    .map((s: any) => `${s.scene}:\n${s.audio}`)
+                                    .join('\n\n')
+                                  copyToClipboard(`Tiêu đề: ${marketingContent.video_script.title}\n\n${fullScript}`)
+                                }}
+                                className="w-full cyber-button"
+                              >
+                                <Copy className="w-4 h-4 inline mr-2" />
+                                COPY TOÀN BỘ KỊCH BẢN
+                              </button>
+                            </div>
+                          ) : (
+                            <p className="text-cyber-secondary text-sm">Không có dữ liệu kịch bản video. Vui lòng thử phân tích lại với Gemini.</p>
+                          )}
+                        </div>
+                      )}
+
+                      {activeMarketingTab === 'hooks' && (
+                        <div className="space-y-6">
+                          {/* Catchy Titles */}
+                          <div className="border border-cyber-accent p-6 glow-border">
+                            <h4 className="text-lg font-bold text-cyber-accent mb-4 flex items-center gap-2">
+                              <Sparkles className="w-5 h-5" />
+                              TIÊU ĐỀ QUẢNG CÁO GIẬT GÂN
+                            </h4>
+                            {marketingContent.hooks_and_headlines?.catchy_titles ? (
+                              <div className="space-y-2">
+                                {marketingContent.hooks_and_headlines.catchy_titles.map((title: string, idx: number) => (
+                                  <div key={idx} className="flex items-start gap-3 p-3 border border-cyber-accent bg-black bg-opacity-20">
+                                    <span className="text-cyber-warning font-bold min-w-[30px]">{idx + 1}.</span>
+                                    <p className="text-cyber-primary text-sm flex-1">{title}</p>
+                                    <button
+                                      onClick={() => copyToClipboard(title)}
+                                      className="p-1 border border-cyber-accent text-cyber-accent hover:bg-cyber-accent hover:text-black transition-all"
+                                    >
+                                      <Copy className="w-3 h-3" />
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="text-cyber-secondary text-sm">Không có dữ liệu tiêu đề. Vui lòng thử phân tích lại với Gemini.</p>
+                            )}
+                          </div>
+
+                          {/* Engaging Hooks */}
+                          <div className="border border-cyber-primary p-6 glow-border">
+                            <h4 className="text-lg font-bold text-cyber-primary mb-4 flex items-center gap-2">
+                              <Zap className="w-5 h-5" />
+                              CÂU MỞ ĐẦU (HOOK 3 GIÂY ĐẦU)
+                            </h4>
+                            {marketingContent.hooks_and_headlines?.engaging_hooks ? (
+                              <div className="space-y-2">
+                                {marketingContent.hooks_and_headlines.engaging_hooks.map((hook: string, idx: number) => (
+                                  <div key={idx} className="flex items-start gap-3 p-3 border border-cyber-primary bg-black bg-opacity-20">
+                                    <span className="text-cyber-warning font-bold min-w-[30px]">{idx + 1}.</span>
+                                    <p className="text-cyber-secondary text-sm flex-1">{hook}</p>
+                                    <button
+                                      onClick={() => copyToClipboard(hook)}
+                                      className="p-1 border border-cyber-primary text-cyber-primary hover:bg-cyber-primary hover:text-black transition-all"
+                                    >
+                                      <Copy className="w-3 h-3" />
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="text-cyber-secondary text-sm">Không có dữ liệu hooks. Vui lòng thử phân tích lại với Gemini.</p>
+                            )}
+                          </div>
+                        </div>
+                      )}
 
                       <div className="mt-4 text-xs text-cyber-secondary text-center">
                         💡 Tip: Click nút Copy để sao chép nội dung và sử dụng trên các nền tảng tương ứng
