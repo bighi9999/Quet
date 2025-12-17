@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Product Image Analyzer V2 - Pro Edition</title>
+    <link rel="stylesheet" href="/ui-enhancements.css">
     <style>
         :root {
             --primary: #667eea;
@@ -693,16 +694,28 @@
             const apiKey = document.getElementById('apiKey').value.trim();
             
             if (!apiKey) {
-                alert('Vui lòng nhập OpenAI API key!');
+                if (window.ui) {
+                    window.ui.error('Vui lòng nhập OpenAI API key để tiếp tục!', 'Thiếu API Key');
+                } else {
+                    alert('Vui lòng nhập OpenAI API key!');
+                }
                 return;
             }
 
             if (!state.currentImage) {
-                alert('Vui lòng chọn ảnh trước!');
+                if (window.ui) {
+                    window.ui.warning('Vui lòng chọn ảnh sản phẩm trước!', 'Chưa có ảnh');
+                } else {
+                    alert('Vui lòng chọn ảnh trước!');
+                }
                 return;
             }
 
-            showLoading('Đang phân tích ảnh...');
+            showLoading('Đang phân tích ảnh với GPT-4 Vision...');
+            if (window.ui) {
+                window.ui.updateProgress(30);
+                window.ui.info('Đang gửi ảnh lên OpenAI...', 'Đang xử lý');
+            }
 
             try {
                 const reader = new FileReader();
@@ -736,16 +749,47 @@
                 // Save to history
                 addToHistory(imageData, data);
 
+                if (window.ui) {
+                    window.ui.updateProgress(90);
+                }
+
                 displayAnalysis(data.analysis);
                 displayPrompts(data.prompts);
 
                 document.getElementById('analysisSection').style.display = 'block';
                 document.getElementById('promptsSection').style.display = 'block';
 
+                if (window.ui) {
+                    window.ui.success('Phân tích ảnh thành công! Đã tạo 3 prompt suggestions.', 'Hoàn thành');
+                    
+                    // Show analysis in modal
+                    let analysisHTML = '<div style="line-height: 1.8;">';
+                    for (const [key, value] of Object.entries(data.analysis)) {
+                        analysisHTML += `
+                            <div style="margin-bottom: 20px; padding: 15px; background: rgba(102, 126, 234, 0.1); border-radius: 10px;">
+                                <strong style="color: #667eea; font-size: 1.1em;">${key.toUpperCase()}</strong>
+                                <p style="margin-top: 10px;">${value}</p>
+                            </div>
+                        `;
+                    }
+                    analysisHTML += '</div>';
+                    
+                    setTimeout(() => {
+                        window.ui.showModal('🎯 Kết Quả Phân Tích', analysisHTML);
+                    }, 500);
+                }
+
             } catch (error) {
-                alert('Lỗi: ' + error.message);
+                if (window.ui) {
+                    window.ui.error(error.message || 'Không thể phân tích ảnh. Vui lòng thử lại!', 'Lỗi phân tích');
+                } else {
+                    alert('Lỗi: ' + error.message);
+                }
             } finally {
                 hideLoading();
+                if (window.ui) {
+                    window.ui.updateProgress(100);
+                }
             }
         }
 
@@ -1028,6 +1072,31 @@
         if (localStorage.getItem('darkMode') === 'true') {
             document.body.classList.add('dark-mode');
         }
+    </script>
+    <script src="/ui-enhancements.js"></script>
+    <script>
+        // Override loading functions to use modern UI
+        const originalShowLoading = window.showLoading;
+        const originalHideLoading = window.hideLoading;
+
+        window.showLoading = function(text = 'Đang xử lý...') {
+            if (window.ui) {
+                window.ui.showLoading(text, 'Vui lòng đợi...', 0);
+            } else if (originalShowLoading) {
+                originalShowLoading(text);
+            }
+        };
+
+        window.hideLoading = function() {
+            if (window.ui) {
+                window.ui.hideLoading();
+            } else if (originalHideLoading) {
+                originalHideLoading();
+            }
+        };
+
+        // Add toast notifications for better UX
+        console.log('✨ Modern UI enhancements activated!');
     </script>
 </body>
 </html>
