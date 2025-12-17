@@ -1,0 +1,89 @@
+═══════════════════════════════════════════════════════════════════
+🚀 QUICK PUSH COMMANDS - Copy & Paste
+═══════════════════════════════════════════════════════════════════
+
+REPOSITORY: https://github.com/bighi9999/Quet
+
+═══════════════════════════════════════════════════════════════════
+📋 COMMANDS (Run on your local machine)
+═══════════════════════════════════════════════════════════════════
+
+# 1. Navigate to webapp folder (after extracting)
+cd webapp
+
+# 2. Check git status
+git status
+git remote -v
+
+# 3. Set remote to new repo (if needed)
+git remote set-url origin https://github.com/bighi9999/Quet.git
+
+# 4. Push to GitHub
+git push -u origin master
+
+# When prompted:
+# Username: bighi9999
+# Password: ghp_xxxxxxxxxxxxxxxxxxxx (GitHub Personal Access Token)
+
+═══════════════════════════════════════════════════════════════════
+🔑 CREATE GITHUB TOKEN
+═══════════════════════════════════════════════════════════════════
+
+URL: https://github.com/settings/tokens
+
+Steps:
+1. Click "Generate new token" → "Generate new token (classic)"
+2. Note: "Deploy webapp"
+3. Expiration: 90 days
+4. Select scopes:
+   ☑ repo (Full control)
+   ☑ workflow (Update workflows)
+5. Generate token
+6. Copy: ghp_xxxxxxxxxxxxxxxxxxxx
+7. Use as password when pushing
+
+═══════════════════════════════════════════════════════════════════
+🔄 ALTERNATIVE: Push with token in URL
+═══════════════════════════════════════════════════════════════════
+
+# Set remote with token
+git remote set-url origin https://bighi9999:TOKEN@github.com/bighi9999/Quet.git
+
+# Replace TOKEN with your actual token
+# Example: https://bighi9999:ghp_abc123...@github.com/bighi9999/Quet.git
+
+# Then push
+git push -u origin master
+
+═══════════════════════════════════════════════════════════════════
+✅ VERIFY SUCCESS
+═══════════════════════════════════════════════════════════════════
+
+After push, check:
+1. https://github.com/bighi9999/Quet
+2. Files uploaded ✅
+3. 5 commits visible ✅
+4. Actions tab shows 3 workflows ✅
+
+═══════════════════════════════════════════════════════════════════
+🎯 NEXT: DEPLOY TO RENDER.COM
+═══════════════════════════════════════════════════════════════════
+
+After successful push:
+
+1. GitHub → Settings → Secrets → Add:
+   - RENDER_API_KEY
+   - RENDER_SERVICE_ID
+
+2. Deploy:
+   - Option A: Actions → Manual Deploy → Run workflow
+   - Option B: render.com → New Web Service → Connect repo
+
+3. Get URL: https://your-app.onrender.com
+
+═══════════════════════════════════════════════════════════════════
+
+📖 Full Guide: PUSH_TO_GITHUB.md
+📖 Deploy Guide: GITHUB_ACTIONS_SETUP.md
+
+═══════════════════════════════════════════════════════════════════
