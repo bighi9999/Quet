@@ -1,3 +1,7 @@
+"""
+AI Product Analyzer - Unified Flask Application
+Combines image analysis and prompt generation features
+"""
 from flask import Flask, send_from_directory, jsonify, request
 from flask_cors import CORS
 from dotenv import load_dotenv
@@ -5,36 +9,83 @@ import os
 import sys
 import requests
 import base64
+import traceback
 
 # Load environment variables
 load_dotenv()
 
+# Initialize Flask app
 app = Flask(__name__, static_folder='public', static_url_path='')
 CORS(app)
 
-# Get API keys from environment
+# Get API keys
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 GROK_API_KEY = os.getenv('GROK_API_KEY')
 
-# Import Selenium automation module
+# Import services
 try:
-    from ai_selenium_automation import analyze_with_selenium, cleanup_all_drivers
-    SELENIUM_AVAILABLE = True
-    print("✅ Selenium automation module loaded")
+    sys.path.insert(0, os.path.dirname(__file__))
+    from services.ai_service import ai_service
+    from services.prompt_builder import prompt_builder
+    from utils.image_processor import image_processor
+    AI_SERVICE_AVAILABLE = True
+    print("✅ AI services loaded successfully")
 except ImportError as e:
-    SELENIUM_AVAILABLE = False
-    print(f"⚠️ Selenium automation not available: {e}")
+    AI_SERVICE_AVAILABLE = False
+    print(f"⚠️ AI services not available: {e}")
 
-# Serve static files
+# ============================================================================
+# STATIC FILE SERVING
+# ============================================================================
+
 @app.route('/')
 def index():
+    """Serve main page"""
     return send_from_directory('public', 'index.html')
 
 @app.route('/<path:path>')
 def serve_static(path):
-    return send_from_directory('public', path)
+    """Serve static files"""
+    try:
+        return send_from_directory('public', path)
+    except:
+        return send_from_directory('public', 'index.html')
 
-# API endpoints
+# ============================================================================
+# HEALTH & CONFIG ENDPOINTS
+# ============================================================================
+
+@app.route('/api/health')
+def health():
+    """Health check endpoint"""
+    health_data = {
+        'status': 'ok',
+        'message': 'Flask server đang chạy',
+        'gemini_key': 'configured' if GEMINI_API_KEY else 'not_configured',
+        'grok_key': 'configured' if GROK_API_KEY else 'not_configured',
+        'ai_service': 'available' if AI_SERVICE_AVAILABLE else 'unavailable'
+    }
+    
+    if AI_SERVICE_AVAILABLE:
+        ai_health = ai_service.health_check()
+        health_data['huggingface'] = ai_health
+    
+    return jsonify(health_data)
+
+@app.route('/api/config')
+def config():
+    """Get API configuration"""
+    return jsonify({
+        'gemini': bool(GEMINI_API_KEY),
+        'grok': bool(GROK_API_KEY),
+        'ai_service': AI_SERVICE_AVAILABLE,
+        'providers': ['gemini', 'grok', 'openai', 'huggingface']
+    })
+
+# ============================================================================
+# IMAGE ANALYSIS ENDPOINTS (Existing Features)
+# ============================================================================
+
 @app.route('/api/analyze', methods=['POST'])
 def analyze():
     """OpenAI GPT-4 Vision Analysis"""
@@ -64,9 +115,7 @@ def analyze():
                         },
                         {
                             'type': 'image_url',
-                            'image_url': {
-                                'url': image_data
-                            }
+                            'image_url': {'url': image_data}
                         }
                     ]
                 }
@@ -95,76 +144,37 @@ def analyze():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/generate', methods=['POST'])
-def generate():
-    """DALL-E 3 Image Generation"""
-    try:
-        data = request.json
-        api_key = data.get('apiKey')
-        prompt = data.get('prompt')
-        n = data.get('n', 1)
-        
-        if not api_key or not prompt:
-            return jsonify({'error': 'Thiếu API key hoặc prompt'}), 400
-        
-        headers = {
-            'Authorization': f'Bearer {api_key}',
-            'Content-Type': 'application/json'
-        }
-        
-        payload = {
-            'model': 'dall-e-3',
-            'prompt': prompt,
-            'n': min(n, 1),  # DALL-E 3 only supports n=1
-            'size': '1024x1024',
-            'quality': 'standard'
-        }
-        
-        response = requests.post(
-            'https://api.openai.com/v1/images/generations',
-            headers=headers,
-            json=payload,
-            timeout=60
-        )
-        
-        if response.status_code == 200:
-            result = response.json()
-            images = [img['url'] for img in result['data']]
-            return jsonify({'images': images})
-        else:
-            return jsonify({'error': response.text}), response.status_code
-            
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
 @app.route('/api/gemini-analyze', methods=['POST'])
 def gemini_analyze():
-    """Google Gemini AI Analysis - Sử dụng API key từ server"""
+    """Google Gemini 1.5 Flash Analysis"""
     try:
         data = request.json
+        api_key = data.get('apiKey', GEMINI_API_KEY)
         image_data = data.get('image')
-        use_server_key = data.get('useServerKey', True)
         
-        # Sử dụng API key từ server hoặc từ client
-        api_key = GEMINI_API_KEY if use_server_key else data.get('apiKey')
+        if not api_key:
+            return jsonify({'error': 'Thiếu Gemini API key'}), 400
         
-        if not api_key or not image_data:
-            return jsonify({'error': 'Thiếu API key hoặc hình ảnh'}), 400
+        if not image_data:
+            return jsonify({'error': 'Thiếu hình ảnh'}), 400
         
-        # Convert base64 to proper format for Gemini
-        if ',' in image_data:
-            image_data = image_data.split(',')[1]
+        # Extract base64 data
+        if 'base64,' in image_data:
+            base64_data = image_data.split('base64,')[1]
+        else:
+            base64_data = image_data
         
+        # Call Gemini API
         url = f'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}'
         
         payload = {
             'contents': [{
                 'parts': [
-                    {'text': 'Phân tích chi tiết hình ảnh sản phẩm này bằng tiếng Việt. Cung cấp thông tin về: 1) Mô tả sản phẩm, 2) Đặc điểm nổi bật, 3) Đối tượng khách hàng mục tiêu, 4) Đề xuất chiến lược marketing, 5) Gợi ý cải thiện hình ảnh.'},
+                    {'text': 'Phân tích chi tiết sản phẩm trong hình ảnh này. Bao gồm: 1) Mô tả sản phẩm, 2) Đặc điểm nổi bật, 3) Đối tượng khách hàng mục tiêu, 4) Chiến lược marketing, 5) Gợi ý cải thiện hình ảnh.'},
                     {
                         'inline_data': {
                             'mime_type': 'image/jpeg',
-                            'data': image_data
+                            'data': base64_data
                         }
                     }
                 ]
@@ -189,54 +199,55 @@ def gemini_analyze():
 
 @app.route('/api/grok-analyze', methods=['POST'])
 def grok_analyze():
-    """xAI Grok Analysis - Sử dụng API key từ server"""
+    """xAI Grok Vision Analysis"""
     try:
         data = request.json
+        api_key = data.get('apiKey', GROK_API_KEY)
         image_data = data.get('image')
-        text_query = data.get('query', 'Phân tích chi tiết hình ảnh sản phẩm này')
-        use_server_key = data.get('useServerKey', True)
-        
-        # Sử dụng API key từ server hoặc từ client
-        api_key = GROK_API_KEY if use_server_key else data.get('apiKey')
         
         if not api_key:
-            return jsonify({'error': 'Thiếu API key'}), 400
+            return jsonify({'error': 'Thiếu Grok API key'}), 400
         
-        # Grok API endpoint
-        url = 'https://api.x.ai/v1/chat/completions'
+        if not image_data:
+            return jsonify({'error': 'Thiếu hình ảnh'}), 400
         
+        # Call Grok API
         headers = {
             'Authorization': f'Bearer {api_key}',
             'Content-Type': 'application/json'
         }
         
-        # Prepare messages
-        messages = [
-            {
-                'role': 'system',
-                'content': 'Bạn là trợ lý AI chuyên nghiệp về phân tích sản phẩm và marketing. Hãy trả lời bằng tiếng Việt một cách chi tiết và chuyên nghiệp.'
-            },
-            {
-                'role': 'user',
-                'content': text_query
-            }
-        ]
-        
-        # If image provided, include it (Grok supports vision)
-        if image_data:
-            messages[1]['content'] = [
-                {'type': 'text', 'text': text_query},
-                {'type': 'image_url', 'image_url': {'url': image_data}}
-            ]
-        
         payload = {
             'model': 'grok-vision-beta',
-            'messages': messages,
-            'max_tokens': 2000,
-            'temperature': 0.7
+            'messages': [
+                {
+                    'role': 'system',
+                    'content': 'Bạn là chuyên gia phân tích sản phẩm và marketing. Phân tích hình ảnh một cách chi tiết và chuyên nghiệp.'
+                },
+                {
+                    'role': 'user',
+                    'content': [
+                        {
+                            'type': 'image_url',
+                            'image_url': {'url': image_data}
+                        },
+                        {
+                            'type': 'text',
+                            'text': 'Phân tích sản phẩm: 1) Mô tả chi tiết, 2) Đặc điểm, 3) Target audience, 4) Marketing strategy, 5) Cải thiện hình ảnh'
+                        }
+                    ]
+                }
+            ],
+            'temperature': 0.7,
+            'max_tokens': 2000
         }
         
-        response = requests.post(url, headers=headers, json=payload, timeout=60)
+        response = requests.post(
+            'https://api.x.ai/v1/chat/completions',
+            headers=headers,
+            json=payload,
+            timeout=60
+        )
         
         if response.status_code == 200:
             result = response.json()
@@ -252,350 +263,223 @@ def grok_analyze():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/multi-analyze', methods=['POST'])
-def multi_analyze():
-    """Multi-AI Analysis - Phân tích đồng thời với nhiều AI"""
+@app.route('/api/dalle-generate', methods=['POST'])
+def dalle_generate():
+    """DALL-E 3 Image Generation"""
     try:
         data = request.json
-        image_data = data.get('image')
-        providers = data.get('providers', ['gemini', 'grok'])
-        openai_key = data.get('openaiKey')
+        api_key = data.get('apiKey')
+        prompt = data.get('prompt')
         
-        if not image_data:
-            return jsonify({'error': 'Thiếu hình ảnh'}), 400
+        if not api_key or not prompt:
+            return jsonify({'error': 'Thiếu API key hoặc prompt'}), 400
         
-        results = {}
-        
-        # Gemini Analysis
-        if 'gemini' in providers and GEMINI_API_KEY:
-            try:
-                gemini_result = gemini_analyze_internal(image_data, GEMINI_API_KEY)
-                results['gemini'] = gemini_result
-            except Exception as e:
-                results['gemini'] = {'error': str(e)}
-        
-        # Grok Analysis
-        if 'grok' in providers and GROK_API_KEY:
-            try:
-                grok_result = grok_analyze_internal(image_data, GROK_API_KEY)
-                results['grok'] = grok_result
-            except Exception as e:
-                results['grok'] = {'error': str(e)}
-        
-        # OpenAI Analysis (if key provided)
-        if 'openai' in providers and openai_key:
-            try:
-                openai_result = openai_analyze_internal(image_data, openai_key)
-                results['openai'] = openai_result
-            except Exception as e:
-                results['openai'] = {'error': str(e)}
-        
-        return jsonify({
-            'results': results,
-            'timestamp': str(sys.maxsize)
-        })
-            
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-# Internal helper functions
-def gemini_analyze_internal(image_data, api_key):
-    """Internal Gemini analysis"""
-    if ',' in image_data:
-        image_data = image_data.split(',')[1]
-    
-    url = f'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}'
-    
-    payload = {
-        'contents': [{
-            'parts': [
-                {'text': 'Phân tích chi tiết hình ảnh sản phẩm này bằng tiếng Việt. Cung cấp thông tin về sản phẩm, đặc điểm, và đề xuất marketing.'},
-                {
-                    'inline_data': {
-                        'mime_type': 'image/jpeg',
-                        'data': image_data
-                    }
-                }
-            ]
-        }]
-    }
-    
-    response = requests.post(url, json=payload, timeout=60)
-    
-    if response.status_code == 200:
-        result = response.json()
-        return {
-            'analysis': result['candidates'][0]['content']['parts'][0]['text'],
-            'model': 'gemini-1.5-flash'
+        headers = {
+            'Authorization': f'Bearer {api_key}',
+            'Content-Type': 'application/json'
         }
-    else:
-        raise Exception(response.text)
-
-def grok_analyze_internal(image_data, api_key):
-    """Internal Grok analysis"""
-    url = 'https://api.x.ai/v1/chat/completions'
-    
-    headers = {
-        'Authorization': f'Bearer {api_key}',
-        'Content-Type': 'application/json'
-    }
-    
-    payload = {
-        'model': 'grok-vision-beta',
-        'messages': [
-            {
-                'role': 'system',
-                'content': 'Bạn là trợ lý AI chuyên về phân tích sản phẩm. Trả lời bằng tiếng Việt.'
-            },
-            {
-                'role': 'user',
-                'content': [
-                    {'type': 'text', 'text': 'Phân tích hình ảnh sản phẩm này một cách chi tiết'},
-                    {'type': 'image_url', 'image_url': {'url': image_data}}
-                ]
-            }
-        ],
-        'max_tokens': 2000
-    }
-    
-    response = requests.post(url, headers=headers, json=payload, timeout=60)
-    
-    if response.status_code == 200:
-        result = response.json()
-        return {
-            'analysis': result['choices'][0]['message']['content'],
-            'model': 'grok-vision-beta'
-        }
-    else:
-        raise Exception(response.text)
-
-def openai_analyze_internal(image_data, api_key):
-    """Internal OpenAI analysis"""
-    headers = {
-        'Authorization': f'Bearer {api_key}',
-        'Content-Type': 'application/json'
-    }
-    
-    payload = {
-        'model': 'gpt-4-vision-preview',
-        'messages': [
-            {
-                'role': 'user',
-                'content': [
-                    {
-                        'type': 'text',
-                        'text': 'Phân tích chi tiết hình ảnh sản phẩm này bằng tiếng Việt'
-                    },
-                    {
-                        'type': 'image_url',
-                        'image_url': {'url': image_data}
-                    }
-                ]
-            }
-        ],
-        'max_tokens': 1500
-    }
-    
-    response = requests.post(
-        'https://api.openai.com/v1/chat/completions',
-        headers=headers,
-        json=payload,
-        timeout=60
-    )
-    
-    if response.status_code == 200:
-        result = response.json()
-        return {
-            'analysis': result['choices'][0]['message']['content'],
-            'model': 'gpt-4-vision-preview'
-        }
-    else:
-        raise Exception(response.text)
-
-@app.route('/api/canvas-generate', methods=['POST'])
-def canvas_generate():
-    """Canvas-based Image Generation"""
-    try:
-        data = request.json
-        prompt = data.get('prompt', 'Hình ảnh sản phẩm')
         
-        # Simple canvas generation response
-        return jsonify({
-            'images': [
-                f'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgZmlsbD0iI2Y1ZjVmNSIvPgogIDx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMjQiIGZpbGw9IiMzMzMiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5DYW52YXMgR2VuZXJhdGVkPC90ZXh0Pgo8L3N2Zz4='
-            ]
-        })
-            
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/health')
-def health():
-    return jsonify({
-        'status': 'ok', 
-        'message': 'Flask server đang chạy',
-        'gemini_key': 'configured' if GEMINI_API_KEY else 'missing',
-        'grok_key': 'configured' if GROK_API_KEY else 'missing'
-    })
-
-@app.route('/api/config')
-def api_config():
-    """Trả về thông tin API keys có sẵn"""
-    return jsonify({
-        'gemini': bool(GEMINI_API_KEY),
-        'grok': bool(GROK_API_KEY),
-        'selenium': SELENIUM_AVAILABLE,
-        'providers': [
-            {'id': 'gemini', 'name': 'Google Gemini', 'available': bool(GEMINI_API_KEY)},
-            {'id': 'grok', 'name': 'xAI Grok', 'available': bool(GROK_API_KEY)},
-            {'id': 'openai', 'name': 'OpenAI GPT-4', 'available': False, 'requiresKey': True},
-            {'id': 'selenium', 'name': 'Selenium Automation', 'available': SELENIUM_AVAILABLE, 'free': True}
-        ]
-    })
-
-# ===== SELENIUM AUTOMATION ENDPOINTS =====
-
-@app.route('/api/selenium-analyze', methods=['POST'])
-def selenium_analyze():
-    """
-    Phân tích ảnh qua Selenium Web Automation (không cần API key)
-    
-    Request Body:
-    {
-        "image": "base64_image_data",
-        "provider": "auto" | "gemini" | "grok" | "blip" | "clip",
-        "query": "Optional custom prompt"
-    }
-    """
-    try:
-        if not SELENIUM_AVAILABLE:
+        payload = {
+            'model': 'dall-e-3',
+            'prompt': prompt,
+            'n': 1,
+            'size': '1024x1024',
+            'quality': 'standard'
+        }
+        
+        response = requests.post(
+            'https://api.openai.com/v1/images/generations',
+            headers=headers,
+            json=payload,
+            timeout=120
+        )
+        
+        if response.status_code == 200:
+            result = response.json()
             return jsonify({
-                'error': 'Selenium automation không khả dụng',
-                'suggestion': 'Cài đặt: pip install selenium webdriver-manager'
+                'imageUrl': result['data'][0]['url'],
+                'revisedPrompt': result['data'][0].get('revised_prompt', prompt)
+            })
+        else:
+            return jsonify({'error': response.text}), response.status_code
+            
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# ============================================================================
+# AI PROMPT GENERATOR ENDPOINTS (New Feature)
+# ============================================================================
+
+@app.route('/api/generate-prompt', methods=['POST'])
+def generate_prompt():
+    """
+    Generate AI image generation prompt from product image
+    Accepts: image (base64), targetAudience (optional), generator (optional)
+    """
+    try:
+        if not AI_SERVICE_AVAILABLE:
+            return jsonify({
+                'success': False,
+                'error': 'AI service not available. Please configure Hugging Face API token.'
             }), 503
         
         data = request.json
         image_data = data.get('image')
-        provider = data.get('provider', 'auto')
-        query = data.get('query', 'Phân tích chi tiết hình ảnh sản phẩm này bằng tiếng Việt')
+        target_audience = data.get('targetAudience', '')
+        generator = data.get('generator', 'stable-diffusion')
         
         if not image_data:
-            return jsonify({'error': 'Thiếu hình ảnh'}), 400
-        
-        # Call Selenium automation
-        result = analyze_with_selenium(image_data, provider=provider, query=query)
-        
-        if result.get('success'):
             return jsonify({
-                'analysis': result.get('analysis'),
-                'provider': result.get('provider'),
-                'method': 'selenium-web-automation',
-                'model': result.get('model', 'unknown')
-            })
-        else:
+                'success': False,
+                'error': 'No image provided'
+            }), 400
+        
+        # Validate image
+        print("Validating image...")
+        validation = image_processor.validate_image(image_data)
+        if not validation['valid']:
             return jsonify({
-                'error': result.get('error'),
-                'suggestion': result.get('suggestion'),
-                'details': result.get('details'),
-                'provider': result.get('provider')
-            }), 500
-            
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/selenium-multi', methods=['POST'])
-def selenium_multi_analyze():
-    """
-    Multi-provider Selenium analysis (thử nhiều providers cho đến khi success)
-    """
-    try:
-        if not SELENIUM_AVAILABLE:
-            return jsonify({'error': 'Selenium không khả dụng'}), 503
+                'success': False,
+                'error': f"Invalid image: {validation.get('error', 'Unknown error')}"
+            }), 400
         
-        data = request.json
-        image_data = data.get('image')
-        providers = data.get('providers', ['blip', 'clip'])  # Free tools first
-        query = data.get('query', 'Phân tích chi tiết hình ảnh sản phẩm này')
+        # Process image
+        print("Processing image...")
+        processed_image = image_processor.process_image(image_data)
         
-        if not image_data:
-            return jsonify({'error': 'Thiếu hình ảnh'}), 400
+        # Analyze with AI
+        print("Analyzing product image with AI...")
+        analysis = ai_service.analyze_product_image(processed_image, target_audience)
         
-        results = []
+        # Generate prompt
+        print("Building optimized prompt...")
+        prompt_data = prompt_builder.generate_prompt(analysis, target_audience)
         
-        for provider in providers:
-            result = analyze_with_selenium(image_data, provider=provider, query=query)
-            results.append({
-                'provider': provider,
-                'success': result.get('success'),
-                'analysis': result.get('analysis') if result.get('success') else None,
-                'error': result.get('error') if not result.get('success') else None
-            })
-            
-            # If success, can return early
-            if result.get('success'):
-                break
+        # Optimize for specific generator
+        if generator != 'stable-diffusion':
+            prompt_data['prompt'] = prompt_builder.optimize_for_generator(
+                prompt_data['prompt'], 
+                generator
+            )
         
+        # Return response
         return jsonify({
-            'results': results,
-            'method': 'selenium-multi'
+            'success': True,
+            'data': {
+                'prompt': prompt_data['prompt'],
+                'negativePrompt': prompt_data['negativePrompt'],
+                'metadata': {
+                    **prompt_data['metadata'],
+                    'generator': generator,
+                    'imageSize': validation['size'],
+                    'imageDimensions': {
+                        'width': validation['width'],
+                        'height': validation['height']
+                    }
+                },
+                'suggestions': prompt_data['suggestions'],
+                'analysis': {
+                    'productType': analysis['productType'],
+                    'detectedColors': analysis['colors'],
+                    'style': analysis['style'],
+                    'confidence': analysis['confidence']
+                }
+            },
+            'timestamp': None
         })
-            
+        
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        print(f"Error in generate_prompt: {str(e)}")
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
 
-@app.route('/api/selenium/cleanup', methods=['POST'])
-def selenium_cleanup():
-    """Cleanup Selenium drivers (release resources)"""
-    try:
-        if SELENIUM_AVAILABLE:
-            cleanup_all_drivers()
-            return jsonify({'status': 'success', 'message': 'Selenium drivers cleaned up'})
-        else:
-            return jsonify({'status': 'skipped', 'message': 'Selenium not available'}), 200
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+@app.route('/api/supported-types', methods=['GET'])
+def supported_types():
+    """Get supported product types"""
+    types = [
+        {
+            'type': 'clothing',
+            'examples': ['shirts', 't-shirts', 'dresses', 'jackets', 'pants'],
+            'strategy': 'Full body modeling shot'
+        },
+        {
+            'type': 'footwear',
+            'examples': ['shoes', 'sneakers', 'boots', 'sandals'],
+            'strategy': 'Full body with footwear focus'
+        },
+        {
+            'type': 'accessories',
+            'examples': ['bags', 'watches', 'jewelry', 'sunglasses'],
+            'strategy': 'Close-up modeling or lifestyle'
+        },
+        {
+            'type': 'electronics',
+            'examples': ['phones', 'laptops', 'headphones', 'cameras'],
+            'strategy': 'Lifestyle hands-on demonstration'
+        },
+        {
+            'type': 'cosmetics',
+            'examples': ['makeup', 'skincare', 'perfumes'],
+            'strategy': 'Beauty application shot'
+        },
+        {
+            'type': 'home_goods',
+            'examples': ['furniture', 'decor', 'lighting'],
+            'strategy': 'Lifestyle scene integration'
+        },
+        {
+            'type': 'sports',
+            'examples': ['fitness equipment', 'athletic wear'],
+            'strategy': 'Action/fitness modeling'
+        }
+    ]
+    
+    return jsonify({
+        'success': True,
+        'supportedTypes': types,
+        'totalCategories': len(types)
+    })
+
+# ============================================================================
+# ERROR HANDLERS
+# ============================================================================
+
+@app.errorhandler(404)
+def not_found(e):
+    return jsonify({'error': 'Endpoint not found'}), 404
+
+@app.errorhandler(500)
+def server_error(e):
+    return jsonify({'error': 'Internal server error'}), 500
+
+# ============================================================================
+# MAIN
+# ============================================================================
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    host = os.environ.get('HOST', '0.0.0.0')
-    debug = os.environ.get('DEBUG', 'false').lower() == 'true'
+    port = int(os.getenv('PORT', 5000))
+    print(f"\n{'='*60}")
+    print(f"🚀 AI Product Analyzer - Starting Server")
+    print(f"{'='*60}")
+    print(f"📍 Port: {port}")
+    print(f"🌍 Environment: {os.getenv('NODE_ENV', 'development')}")
+    print(f"✅ Gemini API: {'Configured' if GEMINI_API_KEY else 'Not configured'}")
+    print(f"✅ Grok API: {'Configured' if GROK_API_KEY else 'Not configured'}")
+    print(f"🤖 AI Service: {'Available' if AI_SERVICE_AVAILABLE else 'Unavailable'}")
+    print(f"\n📝 Available Endpoints:")
+    print(f"   • GET  /                      - Main application")
+    print(f"   • GET  /api/health            - Health check")
+    print(f"   • GET  /api/config            - API configuration")
+    print(f"   • POST /api/analyze           - GPT-4 Vision analysis")
+    print(f"   • POST /api/gemini-analyze    - Gemini analysis")
+    print(f"   • POST /api/grok-analyze      - Grok analysis")
+    print(f"   • POST /api/dalle-generate    - DALL-E generation")
+    print(f"   • POST /api/generate-prompt   - 🆕 AI Prompt Generator")
+    print(f"   • GET  /api/supported-types   - 🆕 Supported products")
+    print(f"{'='*60}\n")
+    print(f"✅ Server sẵn sàng nhận requests!\n")
     
-    print(f"""
-    ╔═══════════════════════════════════════════════════════╗
-    ║  🎨 AI Product Analyzer V4 Pro 2025                  ║
-    ║  Flask Server với Gemini + Grok + OpenAI             ║
-    ╚═══════════════════════════════════════════════════════╝
-    
-    🌐 Server: http://{host}:{port}
-    📁 Static: /home/root/webapp/public
-    🔧 Debug: {debug}
-    
-    🔑 API Keys Status:
-       {'✅' if GEMINI_API_KEY else '❌'} Gemini API Key: {'Đã cấu hình' if GEMINI_API_KEY else 'Chưa có'}
-       {'✅' if GROK_API_KEY else '❌'} Grok API Key: {'Đã cấu hình' if GROK_API_KEY else 'Chưa có'}
-    
-    📋 API Endpoints:
-       GET  /                        - Homepage (V4 Pro)
-       GET  /v4.html                 - V4 Pro 2025 Edition
-       
-       🔑 API-based (yêu cầu API key):
-       POST /api/gemini-analyze      - Google Gemini AI (Server Key)
-       POST /api/grok-analyze        - xAI Grok (Server Key)
-       POST /api/multi-analyze       - Multi-AI Analysis
-       POST /api/analyze             - OpenAI GPT-4 Vision (Client Key)
-       POST /api/generate            - DALL-E 3 (Client Key)
-       
-       🤖 Selenium Web Automation (MIỄN PHÍ - không cần API key):
-       POST /api/selenium-analyze    - Phân tích qua Selenium (auto/blip/clip)
-       POST /api/selenium-multi      - Multi-provider Selenium
-       POST /api/selenium/cleanup    - Cleanup Selenium drivers
-       
-       ⚙️ Utilities:
-       GET  /api/config              - API Configuration
-       GET  /health                  - Health check
-    
-    {'✅ Selenium Automation: ENABLED' if SELENIUM_AVAILABLE else '⚠️ Selenium: DISABLED'}
-    ✅ Server sẵn sàng nhận requests!
-    """)
-    
-    app.run(host=host, port=port, debug=debug)
+    app.run(host='0.0.0.0', port=port, debug=False)
