@@ -5,7 +5,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai'
 const AVAILABLE_MODELS = {
   gemini: {
     id: 'gemini',
-    name: 'Gemini 1.5 Flash',
+    name: 'Gemini 2.5 Flash',
     provider: 'Google',
     type: 'api',
     apiKey: process.env.GOOGLE_API_KEY,
@@ -139,7 +139,7 @@ async function queryGemini(imageBase64: string, productName?: string): Promise<a
 
     const genAI = new GoogleGenerativeAI(AVAILABLE_MODELS.gemini.apiKey)
     const model = genAI.getGenerativeModel({ 
-      model: 'gemini-1.5-flash',
+      model: 'gemini-2.5-flash',
       generationConfig: {
         responseMimeType: 'application/json'
       }
