@@ -20,11 +20,11 @@ export default function CyberWebapp() {
   // Boot sequence animation
   useEffect(() => {
     const bootMessages = [
-      'INITIALIZING CYBER SYSTEM...',
-      'LOADING NEURAL NETWORKS...',
-      'CONNECTING TO AI MATRIX...',
-      'ESTABLISHING SECURE CONNECTION...',
-      'SYSTEM READY',
+      'Đang khởi tạo lõi hệ thống BG Ai...',
+      'Đang bỏ qua các giao thức bảo mật...',
+      'Đang kết nối mạng nơ-ron đa chiều...',
+      'Tải dữ liệu máy chủ thành công.',
+      'QUYỀN TRUY CẬP ĐƯỢC CHẤP NHẬN.',
     ]
 
     let messageIndex = 0
@@ -127,10 +127,10 @@ export default function CyberWebapp() {
               transition={{ duration: 0.5 }}
               className="text-6xl font-bold mb-4 glow-text"
             >
-              CYBER SYSTEM
+              BG AI TOOLS
             </motion.h1>
             <p className="text-cyber-secondary text-xl">
-              INITIALIZING...
+              ĐANG KHỚI ĐỘNG...
             </p>
           </div>
 
@@ -150,11 +150,11 @@ export default function CyberWebapp() {
           {/* Boot Messages */}
           <div className="space-y-2 font-mono text-sm">
             {[
-              '[SYSTEM] Initializing cyber protocols...',
-              '[AI] Loading neural networks...',
-              '[NETWORK] Establishing quantum link...',
-              '[SECURITY] Activating firewalls...',
-              '[STATUS] System ready for deployment',
+              '[HỆ THỐNG] Đang khởi tạo lõi hệ thống BG Ai...',
+              '[BẢO MẬT] Đang bỏ qua các giao thức bảo mật...',
+              '[MẠNG] Đang kết nối mạng nơ-ron đa chiều...',
+              '[DỮ LIỆU] Tải dữ liệu máy chủ thành công.',
+              '[TRẠNG THÁI] QUYỀN TRUY CẬP ĐƯỢC CHẤP NHẬN.',
             ].map((msg, i) => (
               <motion.div
                 key={i}
@@ -207,23 +207,23 @@ export default function CyberWebapp() {
               <Terminal className="w-12 h-12 text-cyber-primary" />
               <div>
                 <h1 className="text-3xl md:text-4xl font-bold glow-text">
-                  CYBER WEBAPP
+                  &gt;_ BG AI TOOLS_
                 </h1>
                 <p className="text-cyber-secondary text-sm">
-                  AI PRODUCT ANALYZER v2.0.1
+                  CÔNG CỤ AI ĐA NỀN TẢNG v2.0.1
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-6">
               <div className="text-right">
-                <div className="text-xs text-cyber-secondary">SYSTEM STATUS</div>
+                <div className="text-xs text-cyber-secondary">TRẠNG THÁI HỆ THỐNG</div>
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 bg-cyber-primary rounded-full animate-pulse" />
                   <span className="text-cyber-primary font-bold">ONLINE</span>
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-xs text-cyber-secondary">IP ADDRESS</div>
+                <div className="text-xs text-cyber-secondary">ĐỊA CHỈ IP</div>
                 <div className="text-cyber-primary font-mono text-sm">
                   192.168.0.42
                 </div>
@@ -236,10 +236,10 @@ export default function CyberWebapp() {
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
         {[
-          { icon: Cpu, label: 'CPU LOAD', value: '34%', color: 'text-cyber-primary' },
-          { icon: Activity, label: 'AI MODELS', value: '3/3', color: 'text-cyber-secondary' },
+          { icon: Cpu, label: 'TẢI CPU', value: '34%', color: 'text-cyber-primary' },
+          { icon: Activity, label: 'MÔ HÌNH AI', value: '3/3', color: 'text-cyber-secondary' },
           { icon: Zap, label: 'UPTIME', value: '99.9%', color: 'text-cyber-accent' },
-          { icon: Shield, label: 'SECURITY', value: 'ACTIVE', color: 'text-cyber-warning' },
+          { icon: Shield, label: 'BẢO MẬT', value: 'HOẠT ĐỘNG', color: 'text-cyber-warning' },
         ].map((stat, i) => (
           <motion.div
             key={i}
@@ -276,7 +276,7 @@ export default function CyberWebapp() {
             <div className="flex items-center gap-3 mb-6">
               <Terminal className="w-6 h-6 text-cyber-primary" />
               <h2 className="text-2xl font-bold text-cyber-primary">
-                IMAGE UPLOAD TERMINAL
+                DÒNG LỆNH TẢI ẢNH
               </h2>
             </div>
 
@@ -306,13 +306,13 @@ export default function CyberWebapp() {
                 >
                   <Upload className="w-16 h-16 text-cyber-primary mb-4" />
                   <p className="text-cyber-primary text-lg font-bold mb-2">
-                    DROP IMAGE HERE
+                    THẢ ẢNH VÀO ĐÂY
                   </p>
                   <p className="text-cyber-secondary text-sm">
-                    or click to browse
+                    hoặc nhấp để chọn tệp
                   </p>
                   <p className="text-cyber-secondary text-xs mt-2">
-                    Supported: JPG, PNG, WebP (max 10MB)
+                    Hỗ trợ: JPG, PNG, WebP (tối đa 10MB)
                   </p>
                 </label>
               ) : (
@@ -331,12 +331,12 @@ export default function CyberWebapp() {
                       {isAnalyzing ? (
                         <>
                           <Loader2 className="w-5 h-5 inline mr-2 animate-spin" />
-                          ANALYZING...
+                          ĐANG PHÂN TÍCH...
                         </>
                       ) : (
                         <>
                           <Brain className="w-5 h-5 inline mr-2" />
-                          ANALYZE IMAGE
+                          PHÂN TÍCH NGAY
                         </>
                       )}
                     </button>
@@ -344,7 +344,7 @@ export default function CyberWebapp() {
                       htmlFor="file-upload"
                       className="cyber-button cursor-pointer"
                     >
-                      CHANGE
+                      ĐỔI ẢNH
                     </label>
                   </div>
                 </div>
@@ -364,7 +364,7 @@ export default function CyberWebapp() {
                   <div className="border border-cyber-secondary p-4 glow-border-cyan">
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="text-xl font-bold text-cyber-secondary">
-                        ANALYSIS COMPLETE
+                        PHÂN TÍCH HOÀN TẤT
                       </h3>
                       <div className="flex items-center gap-2">
                         <Eye className="w-5 h-5 text-cyber-secondary" />
@@ -377,7 +377,7 @@ export default function CyberWebapp() {
                     <div className="space-y-3">
                       <div>
                         <span className="text-cyber-secondary text-sm">
-                          PRODUCT TYPE:
+                          LOẠI SẢN PHẨM:
                         </span>
                         <p className="text-cyber-primary font-bold">
                           {analysisResult.productType}
@@ -386,7 +386,7 @@ export default function CyberWebapp() {
 
                       <div>
                         <span className="text-cyber-secondary text-sm">
-                          KEY FEATURES:
+                          ĐẶC ĐIỂM NỔI BẬT:
                         </span>
                         <div className="flex flex-wrap gap-2 mt-2">
                           {analysisResult.keyFeatures.map((feature: string, i: number) => (
@@ -402,7 +402,7 @@ export default function CyberWebapp() {
 
                       <div>
                         <span className="text-cyber-secondary text-sm">
-                          VISUAL STYLE:
+                          PHONG CÁCH THIẾT KẾ:
                         </span>
                         <p className="text-cyber-primary">
                           {analysisResult.visualStyle}
@@ -415,7 +415,7 @@ export default function CyberWebapp() {
                   <div className="border border-cyber-accent p-4 glow-border">
                     <div className="flex items-center justify-between mb-2">
                       <h4 className="text-lg font-bold text-cyber-accent">
-                        OPTIMIZED AI PROMPT
+                        PROMPT AI TỐI ƯU
                       </h4>
                       <button
                         onClick={() => copyToClipboard(analysisResult.aiPrompt)}
@@ -433,7 +433,7 @@ export default function CyberWebapp() {
                   <div className="border border-cyber-danger p-4 glow-border">
                     <div className="flex items-center justify-between mb-2">
                       <h4 className="text-lg font-bold text-cyber-danger">
-                        NEGATIVE PROMPT
+                        PROMPT PHỦ ĐỊNH
                       </h4>
                       <button
                         onClick={() => copyToClipboard(analysisResult.negativePrompt)}
@@ -449,8 +449,8 @@ export default function CyberWebapp() {
 
                   {/* Processing Info */}
                   <div className="flex items-center justify-between text-sm text-cyber-secondary">
-                    <span>Processing Time: {analysisResult.processingTime}</span>
-                    <span>Models Used: {analysisResult.models.join(', ')}</span>
+                    <span>Thời gian xử lý: {analysisResult.processingTime}</span>
+                    <span>Mô hình sử dụng: {analysisResult.models.join(', ')}</span>
                   </div>
                 </motion.div>
               )}
@@ -470,15 +470,15 @@ export default function CyberWebapp() {
             <div className="flex items-center gap-3 mb-4">
               <Brain className="w-6 h-6 text-cyber-primary" />
               <h3 className="text-xl font-bold text-cyber-primary">
-                AI MODELS
+                CÁC MÔ HÌNH AI
               </h3>
             </div>
 
             <div className="space-y-3">
               {[
-                { name: 'Gemini Vision', status: 'ACTIVE', load: 78 },
-                { name: 'GPT-4 Vision', status: 'ACTIVE', load: 65 },
-                { name: 'Grok Vision', status: 'ACTIVE', load: 82 },
+                { name: 'Gemini Vision', status: 'HOẠT ĐỘNG', load: 78 },
+                { name: 'GPT-4 Vision', status: 'HOẠT ĐỘNG', load: 65 },
+                { name: 'Grok Vision', status: 'HOẠT ĐỘNG', load: 82 },
               ].map((model, i) => (
                 <div
                   key={i}
@@ -504,7 +504,7 @@ export default function CyberWebapp() {
                     />
                   </div>
                   <div className="text-right text-cyber-secondary text-xs mt-1">
-                    {model.load}% capacity
+                    {model.load}% công suất
                   </div>
                 </div>
               ))}
@@ -516,17 +516,17 @@ export default function CyberWebapp() {
             <div className="flex items-center gap-3 mb-4">
               <Server className="w-6 h-6 text-cyber-warning" />
               <h3 className="text-xl font-bold text-cyber-warning">
-                SYSTEM LOGS
+                NHẬT KÝ HỆ THỐNG
               </h3>
             </div>
 
             <div className="space-y-2 font-mono text-xs">
               {[
-                '[17:32:15] Neural network initialized',
-                '[17:32:16] Connection established',
-                '[17:32:17] All systems operational',
-                '[17:32:18] Ready for analysis',
-                '[17:32:19] Waiting for input...',
+                '[17:32:15] Mạng nơ-ron đã khởi tạo',
+                '[17:32:16] Kết nối thành công',
+                '[17:32:17] Tất cả hệ thống đang hoạt động',
+                '[17:32:18] Sẵn sàng phân tích',
+                '[17:32:19] Đang chờ dữ liệu...',
               ].map((log, i) => (
                 <motion.div
                   key={i}
@@ -547,15 +547,15 @@ export default function CyberWebapp() {
             <div className="flex items-center gap-3 mb-4">
               <Zap className="w-6 h-6 text-cyber-accent" />
               <h3 className="text-xl font-bold text-cyber-accent">
-                QUICK ACTIONS
+                HÀNH ĐỘNG NHANH
               </h3>
             </div>
 
             <div className="space-y-2">
               {[
-                { icon: Database, label: 'View Database', color: 'border-cyber-primary text-cyber-primary' },
-                { icon: Shield, label: 'Security Scan', color: 'border-cyber-secondary text-cyber-secondary' },
-                { icon: Activity, label: 'System Monitor', color: 'border-cyber-accent text-cyber-accent' },
+                { icon: Database, label: 'Xem Cơ Sở Dữ Liệu', color: 'border-cyber-primary text-cyber-primary' },
+                { icon: Shield, label: 'Quét Bảo Mật', color: 'border-cyber-secondary text-cyber-secondary' },
+                { icon: Activity, label: 'Giám Sát Hệ Thống', color: 'border-cyber-accent text-cyber-accent' },
               ].map((action, i) => (
                 <button
                   key={i}
@@ -579,7 +579,7 @@ export default function CyberWebapp() {
         className="mt-8 text-center text-cyber-secondary text-sm"
       >
         <div className="border-t border-cyber-primary pt-4">
-          <p>CYBER WEBAPP © 2025 | POWERED BY AI | ALL SYSTEMS OPERATIONAL</p>
+          <p>BG AI TOOLS © 2025 | ĐIỀU KHIỂN BỚI TRÍ TUỆ NHÂN TẠO | TẤT CẢ HỆ THỐNG ĐANG HOẠT ĐỘNG</p>
         </div>
       </motion.footer>
     </div>

@@ -2,8 +2,8 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'CYBER WEBAPP | AI Product Analyzer',
-  description: 'Hacker-style cyberpunk interface for AI product analysis',
+  title: 'BG Ai Tools - Công cụ AI Đa Nền Tảng',
+  description: 'Giao diện phong cách Hacker chuyên nghiệp cho phân tích sản phẩm bằng trí tuệ nhân tạo',
 }
 
 export default function RootLayout({
@@ -12,7 +12,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
+    <html lang="vi">
       <head>
         <link
           href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap"
