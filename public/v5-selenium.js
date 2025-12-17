@@ -12,12 +12,20 @@ const state = {
     history: JSON.parse(localStorage.getItem('v5_history') || '[]')
 };
 
+// ===== SELENIUM LIVE VIEW STATE =====
+const seleniumLiveView = {
+    actions: [],
+    isVisible: false,
+    actionCount: 0
+};
+
 // ===== INITIALIZATION =====
 document.addEventListener('DOMContentLoaded', () => {
     initParticles();
     initModeSelector();
     initUpload();
     initAnalyze();
+    initSeleniumLiveView();
     loadHistory();
     checkServerStatus();
 });
@@ -222,29 +230,48 @@ async function performAnalysis() {
 async function analyzeWithSelenium() {
     updateLoadingText('🤖 Selenium Web Automation', 'Đang tự động truy cập AI web services...');
     
-    const response = await fetch('/api/selenium-analyze', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            image: state.uploadedImage,
-            provider: 'auto', // Try BLIP then CLIP
-            query: 'Phân tích chi tiết hình ảnh sản phẩm này bằng tiếng Việt'
-        })
-    });
+    // Show Selenium Live View steps
+    addSeleniumAction('🚀 Bắt đầu Selenium automation...', 'start');
+    addSeleniumAction('🔧 Khởi tạo Chrome headless driver...', 'info');
     
-    const data = await response.json();
+    // Simulate step-by-step process
+    setTimeout(() => addSeleniumAction('🌐 Đang truy cập Hugging Face Space...', 'navigate'), 1000);
+    setTimeout(() => addSeleniumAction('📤 Đang upload hình ảnh lên server...', 'upload'), 2000);
+    setTimeout(() => addSeleniumAction('⏳ Chờ AI xử lý hình ảnh...', 'wait'), 4000);
+    setTimeout(() => addSeleniumAction('🔍 Đang scrape kết quả từ trang web...', 'scrape'), 6000);
     
-    if (!response.ok) {
-        throw new Error(data.error || 'Selenium analysis failed');
+    try {
+        const response = await fetch('/api/selenium-analyze', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                image: state.uploadedImage,
+                provider: 'auto', // Try BLIP then CLIP
+                query: 'Phân tích chi tiết hình ảnh sản phẩm này bằng tiếng Việt'
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+            addSeleniumAction(`❌ Lỗi: ${data.error}`, 'error');
+            throw new Error(data.error || 'Selenium analysis failed');
+        }
+        
+        addSeleniumAction(`✅ Hoàn tất! Provider: ${data.provider}`, 'success');
+        addSeleniumAction(`📊 Model sử dụng: ${data.model || 'unknown'}`, 'info');
+        
+        return {
+            provider: data.provider,
+            method: 'selenium',
+            model: data.model || 'unknown',
+            analysis: data.analysis,
+            timestamp: new Date().toISOString()
+        };
+    } catch (error) {
+        addSeleniumAction(`❌ Exception: ${error.message}`, 'error');
+        throw error;
     }
-    
-    return {
-        provider: data.provider,
-        method: 'selenium',
-        model: data.model || 'unknown',
-        analysis: data.analysis,
-        timestamp: new Date().toISOString()
-    };
 }
 
 // ===== API ANALYSIS =====
@@ -415,5 +442,133 @@ async function checkServerStatus() {
     }
 }
 
+// ===== SELENIUM LIVE VIEW =====
+function initSeleniumLiveView() {
+    const toggleBtn = document.getElementById('seleniumToggleBtn');
+    const liveView = document.getElementById('seleniumLiveView');
+    const closeBtn = document.getElementById('closeSeleniumView');
+    const clearBtn = document.getElementById('clearSeleniumLog');
+    
+    // Toggle visibility
+    toggleBtn.addEventListener('click', () => {
+        seleniumLiveView.isVisible = !seleniumLiveView.isVisible;
+        if (seleniumLiveView.isVisible) {
+            liveView.classList.add('active');
+            // Reset badge when opening
+            document.getElementById('seleniumBadge').textContent = '0';
+            seleniumLiveView.actionCount = 0;
+        } else {
+            liveView.classList.remove('active');
+        }
+    });
+    
+    // Close button
+    closeBtn.addEventListener('click', () => {
+        seleniumLiveView.isVisible = false;
+        liveView.classList.remove('active');
+    });
+    
+    // Clear log
+    clearBtn.addEventListener('click', () => {
+        seleniumLiveView.actions = [];
+        updateSeleniumView();
+        addSeleniumAction('🗑️ Log đã được xóa', 'info');
+    });
+}
+
+function addSeleniumAction(text, type = 'info', icon = null) {
+    const timestamp = new Date().toLocaleTimeString('vi-VN');
+    const action = { text, type, icon, timestamp };
+    
+    seleniumLiveView.actions.push(action);
+    
+    // Keep only last 20 actions
+    if (seleniumLiveView.actions.length > 20) {
+        seleniumLiveView.actions.shift();
+    }
+    
+    updateSeleniumView();
+    
+    // Update badge if view is hidden
+    if (!seleniumLiveView.isVisible) {
+        seleniumLiveView.actionCount++;
+        document.getElementById('seleniumBadge').textContent = seleniumLiveView.actionCount;
+    }
+    
+    // Show toggle button
+    const toggleBtn = document.getElementById('seleniumToggleBtn');
+    toggleBtn.classList.add('has-activity');
+}
+
+function updateSeleniumView() {
+    const viewBody = document.getElementById('seleniumViewBody');
+    
+    if (seleniumLiveView.actions.length === 0) {
+        viewBody.innerHTML = `
+            <div class="selenium-action">
+                <div class="selenium-action-time">⏰ Chờ hoạt động...</div>
+                <div class="selenium-action-text">
+                    <span class="selenium-action-icon">💤</span>
+                    Selenium sẽ hiển thị các bước thực hiện ở đây.
+                </div>
+            </div>
+        `;
+        return;
+    }
+    
+    viewBody.innerHTML = seleniumLiveView.actions.map(action => {
+        const iconMap = {
+            'start': '🚀',
+            'navigate': '🌐',
+            'upload': '📤',
+            'wait': '⏳',
+            'scrape': '🔍',
+            'success': '✅',
+            'error': '❌',
+            'warning': '⚠️',
+            'info': 'ℹ️'
+        };
+        
+        const emoji = action.icon || iconMap[action.type] || '•';
+        const cssClass = action.type === 'error' ? 'error' : 
+                        action.type === 'warning' ? 'warning' : '';
+        
+        return `
+            <div class="selenium-action ${cssClass}">
+                <div class="selenium-action-time">⏰ ${action.timestamp}</div>
+                <div class="selenium-action-text">
+                    <span class="selenium-action-icon">${emoji}</span>
+                    ${action.text}
+                </div>
+            </div>
+        `;
+    }).reverse().join('');
+    
+    // Auto scroll to top (newest)
+    viewBody.scrollTop = 0;
+}
+
+function showSeleniumSteps(steps) {
+    // Show predefined steps for Selenium automation
+    const stepMessages = {
+        'init': '🔧 Khởi tạo Chrome headless driver...',
+        'navigate': '🌐 Đang truy cập trang web AI...',
+        'upload': '📤 Đang upload hình ảnh...',
+        'process': '⚙️ AI đang xử lý hình ảnh...',
+        'scrape': '🔍 Đang lấy kết quả phân tích...',
+        'complete': '✅ Hoàn tất! Đang trả kết quả về webapp...'
+    };
+    
+    let delay = 0;
+    steps.forEach((step, index) => {
+        setTimeout(() => {
+            addSeleniumAction(stepMessages[step] || step, step === 'complete' ? 'success' : 'info');
+        }, delay);
+        delay += 1000; // 1s between each step
+    });
+}
+
 // ===== GLOBAL FUNCTIONS =====
 window.loadHistoryItem = loadHistoryItem;
+window.addSeleniumAction = addSeleniumAction;
+window.showSeleniumSteps = showSeleniumSteps;

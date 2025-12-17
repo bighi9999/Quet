@@ -130,6 +130,200 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+        
+        /* Selenium Live View */
+        .selenium-live-view {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 400px;
+            max-height: 500px;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+            overflow: hidden;
+            z-index: 1000;
+            display: none;
+        }
+        
+        .selenium-live-view.active {
+            display: block;
+            animation: slideInUp 0.3s ease;
+        }
+        
+        @keyframes slideInUp {
+            from {
+                transform: translateY(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        .selenium-view-header {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .selenium-view-header h3 {
+            margin: 0;
+            color: white;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .selenium-view-header .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #4CAF50;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+        
+        .selenium-view-controls {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .selenium-view-controls button {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+        
+        .selenium-view-controls button:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .selenium-view-body {
+            padding: 15px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .selenium-action {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 3px solid #4CAF50;
+            animation: fadeInLeft 0.3s ease;
+        }
+        
+        @keyframes fadeInLeft {
+            from {
+                transform: translateX(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        .selenium-action.error {
+            border-left-color: #f44336;
+        }
+        
+        .selenium-action.warning {
+            border-left-color: #FF9800;
+        }
+        
+        .selenium-action-time {
+            color: #90CAF9;
+            font-size: 11px;
+            margin-bottom: 5px;
+        }
+        
+        .selenium-action-text {
+            color: white;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        
+        .selenium-action-icon {
+            display: inline-block;
+            margin-right: 8px;
+        }
+        
+        .selenium-view-screenshot {
+            width: 100%;
+            border-radius: 8px;
+            margin-top: 10px;
+            max-height: 200px;
+            object-fit: cover;
+        }
+        
+        /* Mini toggle button */
+        .selenium-toggle-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+            z-index: 999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        
+        .selenium-toggle-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+        }
+        
+        .selenium-toggle-btn.has-activity {
+            display: flex;
+            animation: bounce 2s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+        
+        .selenium-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #f44336;
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -270,6 +464,34 @@
 
     <!-- Toast Notifications -->
     <div id="toastContainer"></div>
+
+    <!-- Selenium Live View -->
+    <button class="selenium-toggle-btn" id="seleniumToggleBtn" title="Xem Selenium Live">
+        🤖
+        <span class="selenium-badge" id="seleniumBadge">0</span>
+    </button>
+    
+    <div class="selenium-live-view" id="seleniumLiveView">
+        <div class="selenium-view-header">
+            <h3>
+                <span class="status-dot"></span>
+                <span>Selenium Live View</span>
+            </h3>
+            <div class="selenium-view-controls">
+                <button id="clearSeleniumLog">🗑️ Xóa</button>
+                <button id="closeSeleniumView">✕</button>
+            </div>
+        </div>
+        <div class="selenium-view-body" id="seleniumViewBody">
+            <div class="selenium-action">
+                <div class="selenium-action-time">⏰ Chờ hoạt động...</div>
+                <div class="selenium-action-text">
+                    <span class="selenium-action-icon">💤</span>
+                    Selenium sẽ hiển thị các bước thực hiện ở đây khi bạn chọn chế độ Selenium và phân tích ảnh.
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
