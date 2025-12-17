@@ -11,7 +11,7 @@ import re
 class AIService:
     def __init__(self):
         self.api_token = os.getenv('HUGGINGFACE_API_TOKEN', '')
-        self.base_url = os.getenv('HUGGINGFACE_API_URL', 'https://api-inference.huggingface.co/models')
+        self.base_url = os.getenv('HUGGINGFACE_API_URL', 'https://router.huggingface.co/models')
         self.model = os.getenv('VISION_MODEL', 'llava-hf/llava-1.5-7b-hf')
         self.max_retries = 3
         self.retry_delay = 2
