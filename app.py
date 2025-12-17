@@ -16,6 +16,15 @@ CORS(app)
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 GROK_API_KEY = os.getenv('GROK_API_KEY')
 
+# Import Selenium automation module
+try:
+    from ai_selenium_automation import analyze_with_selenium, cleanup_all_drivers
+    SELENIUM_AVAILABLE = True
+    print("✅ Selenium automation module loaded")
+except ImportError as e:
+    SELENIUM_AVAILABLE = False
+    print(f"⚠️ Selenium automation not available: {e}")
+
 # Serve static files
 @app.route('/')
 def index():
@@ -435,12 +444,116 @@ def api_config():
     return jsonify({
         'gemini': bool(GEMINI_API_KEY),
         'grok': bool(GROK_API_KEY),
+        'selenium': SELENIUM_AVAILABLE,
         'providers': [
             {'id': 'gemini', 'name': 'Google Gemini', 'available': bool(GEMINI_API_KEY)},
             {'id': 'grok', 'name': 'xAI Grok', 'available': bool(GROK_API_KEY)},
-            {'id': 'openai', 'name': 'OpenAI GPT-4', 'available': False, 'requiresKey': True}
+            {'id': 'openai', 'name': 'OpenAI GPT-4', 'available': False, 'requiresKey': True},
+            {'id': 'selenium', 'name': 'Selenium Automation', 'available': SELENIUM_AVAILABLE, 'free': True}
         ]
     })
+
+# ===== SELENIUM AUTOMATION ENDPOINTS =====
+
+@app.route('/api/selenium-analyze', methods=['POST'])
+def selenium_analyze():
+    """
+    Phân tích ảnh qua Selenium Web Automation (không cần API key)
+    
+    Request Body:
+    {
+        "image": "base64_image_data",
+        "provider": "auto" | "gemini" | "grok" | "blip" | "clip",
+        "query": "Optional custom prompt"
+    }
+    """
+    try:
+        if not SELENIUM_AVAILABLE:
+            return jsonify({
+                'error': 'Selenium automation không khả dụng',
+                'suggestion': 'Cài đặt: pip install selenium webdriver-manager'
+            }), 503
+        
+        data = request.json
+        image_data = data.get('image')
+        provider = data.get('provider', 'auto')
+        query = data.get('query', 'Phân tích chi tiết hình ảnh sản phẩm này bằng tiếng Việt')
+        
+        if not image_data:
+            return jsonify({'error': 'Thiếu hình ảnh'}), 400
+        
+        # Call Selenium automation
+        result = analyze_with_selenium(image_data, provider=provider, query=query)
+        
+        if result.get('success'):
+            return jsonify({
+                'analysis': result.get('analysis'),
+                'provider': result.get('provider'),
+                'method': 'selenium-web-automation',
+                'model': result.get('model', 'unknown')
+            })
+        else:
+            return jsonify({
+                'error': result.get('error'),
+                'suggestion': result.get('suggestion'),
+                'details': result.get('details'),
+                'provider': result.get('provider')
+            }), 500
+            
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/selenium-multi', methods=['POST'])
+def selenium_multi_analyze():
+    """
+    Multi-provider Selenium analysis (thử nhiều providers cho đến khi success)
+    """
+    try:
+        if not SELENIUM_AVAILABLE:
+            return jsonify({'error': 'Selenium không khả dụng'}), 503
+        
+        data = request.json
+        image_data = data.get('image')
+        providers = data.get('providers', ['blip', 'clip'])  # Free tools first
+        query = data.get('query', 'Phân tích chi tiết hình ảnh sản phẩm này')
+        
+        if not image_data:
+            return jsonify({'error': 'Thiếu hình ảnh'}), 400
+        
+        results = []
+        
+        for provider in providers:
+            result = analyze_with_selenium(image_data, provider=provider, query=query)
+            results.append({
+                'provider': provider,
+                'success': result.get('success'),
+                'analysis': result.get('analysis') if result.get('success') else None,
+                'error': result.get('error') if not result.get('success') else None
+            })
+            
+            # If success, can return early
+            if result.get('success'):
+                break
+        
+        return jsonify({
+            'results': results,
+            'method': 'selenium-multi'
+        })
+            
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/selenium/cleanup', methods=['POST'])
+def selenium_cleanup():
+    """Cleanup Selenium drivers (release resources)"""
+    try:
+        if SELENIUM_AVAILABLE:
+            cleanup_all_drivers()
+            return jsonify({'status': 'success', 'message': 'Selenium drivers cleaned up'})
+        else:
+            return jsonify({'status': 'skipped', 'message': 'Selenium not available'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
@@ -461,17 +574,27 @@ if __name__ == '__main__':
        {'✅' if GEMINI_API_KEY else '❌'} Gemini API Key: {'Đã cấu hình' if GEMINI_API_KEY else 'Chưa có'}
        {'✅' if GROK_API_KEY else '❌'} Grok API Key: {'Đã cấu hình' if GROK_API_KEY else 'Chưa có'}
     
-    📋 Endpoints:
-       GET  /                     - Homepage (V4 Pro)
-       GET  /v4.html              - V4 Pro 2025 Edition
-       POST /api/gemini-analyze   - Google Gemini AI (Server Key)
-       POST /api/grok-analyze     - xAI Grok (Server Key)
-       POST /api/multi-analyze    - Multi-AI Analysis
-       POST /api/analyze          - OpenAI GPT-4 Vision (Client Key)
-       POST /api/generate         - DALL-E 3 (Client Key)
-       GET  /api/config           - API Configuration
-       GET  /health               - Health check
+    📋 API Endpoints:
+       GET  /                        - Homepage (V4 Pro)
+       GET  /v4.html                 - V4 Pro 2025 Edition
+       
+       🔑 API-based (yêu cầu API key):
+       POST /api/gemini-analyze      - Google Gemini AI (Server Key)
+       POST /api/grok-analyze        - xAI Grok (Server Key)
+       POST /api/multi-analyze       - Multi-AI Analysis
+       POST /api/analyze             - OpenAI GPT-4 Vision (Client Key)
+       POST /api/generate            - DALL-E 3 (Client Key)
+       
+       🤖 Selenium Web Automation (MIỄN PHÍ - không cần API key):
+       POST /api/selenium-analyze    - Phân tích qua Selenium (auto/blip/clip)
+       POST /api/selenium-multi      - Multi-provider Selenium
+       POST /api/selenium/cleanup    - Cleanup Selenium drivers
+       
+       ⚙️ Utilities:
+       GET  /api/config              - API Configuration
+       GET  /health                  - Health check
     
+    {'✅ Selenium Automation: ENABLED' if SELENIUM_AVAILABLE else '⚠️ Selenium: DISABLED'}
     ✅ Server sẵn sàng nhận requests!
     """)
     
