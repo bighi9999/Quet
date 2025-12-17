@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phân Tích Sản Phẩm AI - Phiên Bản Pro 2025</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="/v4-pro.css">
+</head>
+<body>
+    <!-- Particle Background -->
+    <div id="particles-js"></div>
+
+    <!-- Main Container -->
+    <div class="app-container">
+        <!-- Top Navigation -->
+        <nav class="top-nav">
+            <div class="nav-logo">
+                <i class="fas fa-brain"></i>
+                <span>AI Analyzer Pro</span>
+            </div>
+            <div class="nav-actions">
+                <button class="nav-btn" id="themeToggle">
+                    <i class="fas fa-moon"></i>
+                </button>
+                <button class="nav-btn" id="settingsBtn">
+                    <i class="fas fa-cog"></i>
+                </button>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Hero Section -->
+            <section class="hero-section">
+                <h1 class="hero-title">
+                    <span class="gradient-text">Phân Tích Sản Phẩm</span>
+                    <span class="highlight-text">Bằng AI</span>
+                </h1>
+                <p class="hero-subtitle">
+                    Sức mạnh của Gemini AI + Grok AI + OpenAI GPT-4 Vision
+                </p>
+                <div class="hero-stats">
+                    <div class="stat-card">
+                        <i class="fas fa-robot"></i>
+                        <div class="stat-info">
+                            <h3 id="aiCount">3</h3>
+                            <p>AI Models</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-chart-line"></i>
+                        <div class="stat-info">
+                            <h3 id="analysisCount">0</h3>
+                            <p>Phân Tích</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-bolt"></i>
+                        <div class="stat-info">
+                            <h3 id="speedCount">2.5s</h3>
+                            <p>Tốc Độ TB</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- AI Provider Selection -->
+            <section class="provider-section">
+                <h2 class="section-title">
+                    <i class="fas fa-microchip"></i>
+                    Chọn AI Provider
+                </h2>
+                <div class="provider-grid">
+                    <!-- Gemini Card -->
+                    <div class="provider-card" data-provider="gemini">
+                        <div class="provider-icon gemini-gradient">
+                            <i class="fas fa-gem"></i>
+                        </div>
+                        <h3>Google Gemini</h3>
+                        <p class="provider-desc">AI mạnh mẽ của Google, miễn phí sử dụng</p>
+                        <div class="provider-badge available">
+                            <i class="fas fa-check-circle"></i>
+                            Sẵn Sàng
+                        </div>
+                        <button class="provider-select" data-provider="gemini">
+                            <i class="fas fa-check"></i>
+                            Chọn
+                        </button>
+                    </div>
+
+                    <!-- Grok Card -->
+                    <div class="provider-card" data-provider="grok">
+                        <div class="provider-icon grok-gradient">
+                            <i class="fas fa-brain"></i>
+                        </div>
+                        <h3>xAI Grok</h3>
+                        <p class="provider-desc">AI thông minh từ xAI, phân tích sâu</p>
+                        <div class="provider-badge available">
+                            <i class="fas fa-check-circle"></i>
+                            Sẵn Sàng
+                        </div>
+                        <button class="provider-select" data-provider="grok">
+                            <i class="fas fa-check"></i>
+                            Chọn
+                        </button>
+                    </div>
+
+                    <!-- Multi-AI Card -->
+                    <div class="provider-card featured" data-provider="multi">
+                        <div class="featured-badge">
+                            <i class="fas fa-star"></i>
+                            Khuyến Nghị
+                        </div>
+                        <div class="provider-icon multi-gradient">
+                            <i class="fas fa-layer-group"></i>
+                        </div>
+                        <h3>Multi-AI Mode</h3>
+                        <p class="provider-desc">Kết hợp tất cả AI, độ chính xác cao nhất</p>
+                        <div class="provider-badge premium">
+                            <i class="fas fa-crown"></i>
+                            Premium
+                        </div>
+                        <button class="provider-select" data-provider="multi">
+                            <i class="fas fa-check"></i>
+                            Chọn
+                        </button>
+                    </div>
+
+                    <!-- OpenAI Card -->
+                    <div class="provider-card" data-provider="openai">
+                        <div class="provider-icon openai-gradient">
+                            <i class="fas fa-magic"></i>
+                        </div>
+                        <h3>OpenAI GPT-4</h3>
+                        <p class="provider-desc">GPT-4 Vision, cần API key riêng</p>
+                        <div class="provider-badge requires-key">
+                            <i class="fas fa-key"></i>
+                            Cần API Key
+                        </div>
+                        <button class="provider-select" data-provider="openai">
+                            <i class="fas fa-check"></i>
+                            Chọn
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- API Key Section (Hidden by default, shown when OpenAI selected) -->
+            <section class="api-key-section" id="apiKeySection" style="display: none;">
+                <h2 class="section-title">
+                    <i class="fas fa-key"></i>
+                    Cấu Hình API Key
+                </h2>
+                <div class="api-key-container">
+                    <div class="input-group">
+                        <label for="openaiKey">
+                            <i class="fas fa-key"></i>
+                            OpenAI API Key
+                        </label>
+                        <input 
+                            type="password" 
+                            id="openaiKey" 
+                            placeholder="sk-..." 
+                            class="api-input"
+                        >
+                        <button class="toggle-visibility" onclick="toggleKeyVisibility('openaiKey')">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Upload Section -->
+            <section class="upload-section">
+                <h2 class="section-title">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    Tải Lên Hình Ảnh
+                </h2>
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">
+                        <i class="fas fa-image"></i>
+                    </div>
+                    <h3>Kéo thả hình ảnh vào đây</h3>
+                    <p>hoặc nhấp để chọn file</p>
+                    <p class="upload-hint">
+                        <i class="fas fa-info-circle"></i>
+                        Hỗ trợ: JPG, PNG, GIF (tối đa 10MB)
+                    </p>
+                    <input type="file" id="imageInput" accept="image/*" hidden>
+                    <button class="btn-primary" id="selectFileBtn">
+                        <i class="fas fa-folder-open"></i>
+                        Chọn File
+                    </button>
+                </div>
+
+                <!-- Image Preview -->
+                <div class="image-preview-container" id="imagePreviewContainer" style="display: none;">
+                    <div class="image-preview-header">
+                        <h3>
+                            <i class="fas fa-eye"></i>
+                            Xem Trước
+                        </h3>
+                        <button class="btn-icon" id="removeImageBtn">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="image-preview">
+                        <img id="imagePreview" src="" alt="Preview">
+                    </div>
+                    <button class="btn-analyze" id="analyzeBtn">
+                        <i class="fas fa-magic"></i>
+                        <span>Phân Tích Ngay</span>
+                        <div class="btn-shine"></div>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Results Section -->
+            <section class="results-section" id="resultsSection" style="display: none;">
+                <h2 class="section-title">
+                    <i class="fas fa-chart-bar"></i>
+                    Kết Quả Phân Tích
+                </h2>
+                <div id="resultsContainer"></div>
+            </section>
+
+            <!-- History Section -->
+            <section class="history-section">
+                <div class="history-header">
+                    <h2 class="section-title">
+                        <i class="fas fa-history"></i>
+                        Lịch Sử Phân Tích
+                    </h2>
+                    <button class="btn-secondary" id="clearHistoryBtn">
+                        <i class="fas fa-trash"></i>
+                        Xóa Lịch Sử
+                    </button>
+                </div>
+                <div class="history-grid" id="historyGrid">
+                    <div class="empty-state">
+                        <i class="fas fa-inbox"></i>
+                        <p>Chưa có lịch sử phân tích</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <div class="footer-content">
+                <p>
+                    <i class="fas fa-copyright"></i>
+                    2025 AI Product Analyzer Pro. Made with 
+                    <i class="fas fa-heart"></i>
+                </p>
+                <div class="footer-links">
+                    <a href="#"><i class="fas fa-book"></i> Hướng Dẫn</a>
+                    <a href="#"><i class="fas fa-shield-alt"></i> Bảo Mật</a>
+                    <a href="#"><i class="fas fa-envelope"></i> Liên Hệ</a>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-content">
+            <div class="loading-spinner">
+                <div class="spinner-ring"></div>
+                <div class="spinner-ring"></div>
+                <div class="spinner-ring"></div>
+            </div>
+            <h3 id="loadingText">Đang phân tích...</h3>
+            <p id="loadingSubtext">Vui lòng đợi trong giây lát</p>
+            <div class="loading-progress">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Particles.js -->
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    <!-- Main JavaScript -->
+    <script src="/v4-pro.js"></script>
+</body>
+</html>
