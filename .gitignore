@@ -67,3 +67,8 @@ out/
 
 # Local files
 *.local
+
+# Selenium cookies and sessions (NEVER COMMIT!)
+selenium_cookies/
+*.pkl
+__pycache__/

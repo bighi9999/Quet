@@ -1,7 +1,8 @@
 """
-AI Selenium Automation - V4 Pro 2025
+AI Selenium Automation - V5.2 Pro 2025
 Tự động truy cập các trang web AI và lấy kết quả phân tích
 Hỗ trợ: Google Gemini, ChatGPT, Grok (X.AI)
+✨ NEW: Persistent authentication với session/cookie storage
 """
 
 import os
@@ -9,6 +10,7 @@ import time
 import base64
 import tempfile
 import logging
+from pathlib import Path
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -18,9 +20,21 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 
+# Import auth manager
+try:
+    from selenium_auth_manager import SeleniumAuthManager
+    AUTH_MANAGER_AVAILABLE = True
+except ImportError:
+    AUTH_MANAGER_AVAILABLE = False
+    logger.warning("⚠️ SeleniumAuthManager not available")
+
 # Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# User data directory for persistent sessions
+USER_DATA_DIR = '/home/root/webapp/selenium_cookies/chrome_user_data'
+Path(USER_DATA_DIR).mkdir(parents=True, exist_ok=True)
 
 
 class AISeleniumDriver:
@@ -31,10 +45,16 @@ class AISeleniumDriver:
         self.driver = None
         self.wait_timeout = 30
         
-    def setup_driver(self):
-        """Khởi tạo Chrome driver với anti-detection"""
+    def setup_driver(self, use_persistent_profile=True):
+        """Khởi tạo Chrome driver với anti-detection và persistent profile"""
         try:
             chrome_options = Options()
+            
+            # Persistent user profile để lưu session
+            if use_persistent_profile:
+                chrome_options.add_argument(f'--user-data-dir={USER_DATA_DIR}')
+                chrome_options.add_argument('--profile-directory=Default')
+                logger.info("✅ Using persistent Chrome profile")
             
             # Headless mode
             if self.headless:
