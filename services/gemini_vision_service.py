@@ -13,7 +13,7 @@ class GeminiVisionService:
         self.base_url = 'https://generativelanguage.googleapis.com/v1beta/models'
         self.model = 'gemini-1.5-flash'
         
-    def analyze_product_image(self, image_data, target_audience=''):
+    def analyze_product_image(self, image_data, target_audience='', generate_marketing=False):
         """
         Analyze product image using Gemini 1.5 Flash Vision
         """
@@ -33,11 +33,120 @@ class GeminiVisionService:
             analysis = self._call_gemini_api(base64_image, prompt)
             
             # Parse and structure response
-            return self._parse_analysis(analysis)
+            result = self._parse_analysis(analysis)
+            
+            # Generate marketing content if requested
+            if generate_marketing:
+                marketing_content = self.generate_marketing_content(base64_image, result)
+                result['marketingContent'] = marketing_content
+            
+            return result
             
         except Exception as e:
             print(f"Gemini Vision Error: {str(e)}")
             raise Exception(f"Failed to analyze image with Gemini: {str(e)}")
+    
+    def generate_marketing_content(self, base64_image, product_analysis):
+        """
+        Generate 3 styles of marketing content in Vietnamese
+        """
+        try:
+            prompt = self._build_marketing_prompt(product_analysis)
+            raw_content = self._call_gemini_api(base64_image, prompt, max_tokens=2000)
+            return self._parse_marketing_content(raw_content)
+        except Exception as e:
+            print(f"Marketing Content Generation Error: {str(e)}")
+            return {
+                'shopee': 'Nội dung quảng cáo đang được tạo...',
+                'facebook': 'Nội dung quảng cáo đang được tạo...',
+                'instagram': 'Nội dung quảng cáo đang được tạo...'
+            }
+    
+    def _build_marketing_prompt(self, product_analysis):
+        """Build marketing content generation prompt"""
+        product_type = product_analysis.get('productType', 'sản phẩm')
+        features = ', '.join(product_analysis.get('features', [])[:3])
+        style = product_analysis.get('style', 'hiện đại')
+        
+        prompt = f"""Bạn là chuyên gia Marketing với 10 năm kinh nghiệm. Hãy viết 3 đoạn nội dung quảng cáo BẰNG TIẾNG VIỆT cho sản phẩm này:
+
+THÔNG TIN SẢN PHẨM:
+- Loại: {product_type}
+- Đặc điểm: {features}
+- Phong cách: {style}
+
+YÊU CẦU VIẾT 3 PHONG CÁCH (Mỗi phong cách 1 đoạn riêng biệt):
+
+[STYLE 1: SHOPEE/E-COMMERCE]
+- Tiêu đề: Bắt mắt, chèn emoji liên quan (🔥💥✨🎁)
+- Nội dung: Liệt kê tính năng dạng gạch đầu dòng (✅ hoặc 👉)
+- Highlight: Giá trị, ưu đãi, chất lượng
+- Kết thúc: CTA mạnh mẽ (ĐẶT NGAY, MUA NGAY, INBOX)
+- Độ dài: 100-150 từ
+
+[STYLE 2: FACEBOOK/TIKTOK]
+- Mở đầu: Câu hỏi hoặc tình huống gây tò mò
+- Nội dung: Kể chuyện, tạo cảm xúc, bắt trend
+- Emoji: Nhiều, đa dạng, phù hợp nội dung
+- Giọng điệu: Thân thiện, gần gũi, trẻ trung
+- Kết thúc: Tương tác (Tag bạn bè, Comment, Share)
+- Độ dài: 120-180 từ
+
+[STYLE 3: INSTAGRAM/LUXURY]
+- Mở đầu: Câu ngắn gọn, sâu sắc, triết lý
+- Nội dung: Tập trung giá trị tinh thần, lifestyle, mood
+- Từ ngữ: Tinh tế, sang trọng, tối giản
+- Emoji: Ít, chọn lọc (✨💫🌟)
+- Hashtags: 5-7 hashtags tiếng Anh liên quan (#Fashion #Luxury #Style)
+- Độ dài: 80-120 từ
+
+QUAN TRỌNG:
+- Mỗi style phải có header rõ ràng: [SHOPEE], [FACEBOOK], [INSTAGRAM]
+- Viết HOÀN TOÀN bằng tiếng Việt (trừ hashtags Instagram)
+- Đảm bảo nội dung hấp dẫn, thuyết phục, phù hợp từng nền tảng
+- Sử dụng emoji phù hợp với từng style
+
+Hãy viết ngay bây giờ:"""
+        
+        return prompt
+    
+    def _parse_marketing_content(self, raw_content):
+        """Parse marketing content from Gemini response"""
+        try:
+            # Extract each style section
+            shopee_match = re.search(r'\[SHOPEE\](.*?)(?=\[FACEBOOK\]|\[INSTAGRAM\]|$)', raw_content, re.DOTALL | re.IGNORECASE)
+            facebook_match = re.search(r'\[FACEBOOK\](.*?)(?=\[SHOPEE\]|\[INSTAGRAM\]|$)', raw_content, re.DOTALL | re.IGNORECASE)
+            instagram_match = re.search(r'\[INSTAGRAM\](.*?)(?=\[SHOPEE\]|\[FACEBOOK\]|$)', raw_content, re.DOTALL | re.IGNORECASE)
+            
+            return {
+                'shopee': shopee_match.group(1).strip() if shopee_match else self._extract_first_paragraph(raw_content),
+                'facebook': facebook_match.group(1).strip() if facebook_match else self._extract_middle_paragraph(raw_content),
+                'instagram': instagram_match.group(1).strip() if instagram_match else self._extract_last_paragraph(raw_content)
+            }
+        except Exception as e:
+            print(f"Parse Marketing Error: {str(e)}")
+            # Fallback: Split by paragraphs
+            paragraphs = [p.strip() for p in raw_content.split('\n\n') if p.strip() and len(p.strip()) > 50]
+            return {
+                'shopee': paragraphs[0] if len(paragraphs) > 0 else raw_content[:500],
+                'facebook': paragraphs[1] if len(paragraphs) > 1 else raw_content[500:1000],
+                'instagram': paragraphs[2] if len(paragraphs) > 2 else raw_content[1000:1500]
+            }
+    
+    def _extract_first_paragraph(self, text):
+        """Extract first substantial paragraph"""
+        paragraphs = [p.strip() for p in text.split('\n\n') if len(p.strip()) > 50]
+        return paragraphs[0] if paragraphs else text[:500]
+    
+    def _extract_middle_paragraph(self, text):
+        """Extract middle paragraph"""
+        paragraphs = [p.strip() for p in text.split('\n\n') if len(p.strip()) > 50]
+        return paragraphs[len(paragraphs)//2] if len(paragraphs) > 1 else text[500:1000]
+    
+    def _extract_last_paragraph(self, text):
+        """Extract last paragraph"""
+        paragraphs = [p.strip() for p in text.split('\n\n') if len(p.strip()) > 50]
+        return paragraphs[-1] if paragraphs else text[-500:]
     
     def _build_analysis_prompt(self, target_audience):
         """Build analysis prompt for Gemini"""
@@ -61,7 +170,7 @@ Be specific and descriptive. Focus on visual details that would help generate AI
         
         return base_prompt
     
-    def _call_gemini_api(self, base64_image, prompt):
+    def _call_gemini_api(self, base64_image, prompt, max_tokens=1000, temperature=0.4):
         """Call Google Gemini Vision API"""
         url = f"{self.base_url}/{self.model}:generateContent?key={self.api_key}"
         
@@ -79,8 +188,8 @@ Be specific and descriptive. Focus on visual details that would help generate AI
                 ]
             }],
             "generationConfig": {
-                "temperature": 0.4,
-                "maxOutputTokens": 1000
+                "temperature": temperature,
+                "maxOutputTokens": max_tokens
             }
         }
         
@@ -88,7 +197,7 @@ Be specific and descriptive. Focus on visual details that would help generate AI
             'Content-Type': 'application/json'
         }
         
-        response = requests.post(url, headers=headers, json=payload, timeout=30)
+        response = requests.post(url, headers=headers, json=payload, timeout=45)
         
         if response.status_code == 200:
             result = response.json()

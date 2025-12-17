@@ -348,9 +348,16 @@ def generate_prompt():
         print("Processing image...")
         processed_image = image_processor.process_image(image_data)
         
+        # Check if marketing content is requested
+        generate_marketing = data.get('generateMarketing', False)
+        
         # Analyze with AI (Gemini Vision)
         print("Analyzing product image with Gemini Vision...")
-        analysis = gemini_vision_service.analyze_product_image(processed_image, target_audience)
+        analysis = gemini_vision_service.analyze_product_image(
+            processed_image, 
+            target_audience,
+            generate_marketing=generate_marketing
+        )
         
         # Generate prompt
         print("Building optimized prompt...")
@@ -363,29 +370,36 @@ def generate_prompt():
                 generator
             )
         
+        # Prepare response data
+        response_data = {
+            'prompt': prompt_data['prompt'],
+            'negativePrompt': prompt_data['negativePrompt'],
+            'metadata': {
+                **prompt_data['metadata'],
+                'generator': generator,
+                'imageSize': validation['size'],
+                'imageDimensions': {
+                    'width': validation['width'],
+                    'height': validation['height']
+                }
+            },
+            'suggestions': prompt_data['suggestions'],
+            'analysis': {
+                'productType': analysis['productType'],
+                'detectedColors': analysis['colors'],
+                'style': analysis['style'],
+                'confidence': analysis['confidence']
+            }
+        }
+        
+        # Add marketing content if generated
+        if 'marketingContent' in analysis:
+            response_data['marketingContent'] = analysis['marketingContent']
+        
         # Return response
         return jsonify({
             'success': True,
-            'data': {
-                'prompt': prompt_data['prompt'],
-                'negativePrompt': prompt_data['negativePrompt'],
-                'metadata': {
-                    **prompt_data['metadata'],
-                    'generator': generator,
-                    'imageSize': validation['size'],
-                    'imageDimensions': {
-                        'width': validation['width'],
-                        'height': validation['height']
-                    }
-                },
-                'suggestions': prompt_data['suggestions'],
-                'analysis': {
-                    'productType': analysis['productType'],
-                    'detectedColors': analysis['colors'],
-                    'style': analysis['style'],
-                    'confidence': analysis['confidence']
-                }
-            },
+            'data': response_data,
             'timestamp': None
         })
         

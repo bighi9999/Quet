@@ -6,7 +6,8 @@ import {
   Terminal, Upload, Cpu, Server, Database, Shield, 
   Activity, Zap, Eye, Brain, Image as ImageIcon,
   Check, AlertCircle, Loader2, Copy, ChevronRight,
-  User, MapPin, Calendar, Camera, Globe
+  User, MapPin, Calendar, Camera, Globe,
+  Megaphone, ShoppingBag, MessageCircle, Instagram
 } from 'lucide-react'
 
 export default function CyberWebapp() {
@@ -27,6 +28,8 @@ export default function CyberWebapp() {
   })
   const [fashionPrompt, setFashionPrompt] = useState({ en: '', vi: '' })
   const [showVietnamese, setShowVietnamese] = useState(false)
+  const [marketingContent, setMarketingContent] = useState<any>(null)
+  const [isGeneratingMarketing, setIsGeneratingMarketing] = useState(false)
 
   // Boot sequence animation
   useEffect(() => {
@@ -118,11 +121,17 @@ export default function CyberWebapp() {
       confidence: 95.8,
       processingTime: '2.8s',
       models: ['Gemini Vision', 'GPT-4 Vision', 'Grok Vision'],
-      isFashion: isFashionItem
+      isFashion: isFashionItem,
+      marketingContent: {
+        shopee: `🔥 DEAL SỐC - GIẢM GIÁ CỰC MẠNH! 🔥\n\n✨ ${isFashionItem ? 'Thời trang cao cấp' : 'Sản phẩm công nghệ'} chính hãng 100%\n\n✅ Chất liệu cao cấp, bền đẹp\n✅ Thiết kế hiện đại, sang trọng\n✅ Đóng gói cẩn thận, giao hàng nhanh\n✅ Bảo hành chính hãng 12 tháng\n\n💥 ƯU ĐÃI ĐẶC BIỆT HÔM NAY:\n👉 Giảm ngay 30% khi nhập mã: BGAI30\n👉 Freeship toàn quốc đơn từ 99k\n👉 Tặng quà tri ân cho 100 khách đầu tiên\n\n⏰ SỐ LƯỢNG CÓ HẠN - ĐẶT NGAY KẺO HẾT! ⏰\n\n📱 INBOX NGAY ĐỂ ĐƯỢC TƯ VẤN TẬN TÌNH!\n🛒 THÊM VÀO GIỎ HÀNG NGAY!`,
+        facebook: `Hôm qua mình đi shopping thấy ${isFashionItem ? 'món đồ này' : 'sản phẩm này'} mà mê quá! 😍\n\nBan đầu cứ nghĩ giá chắc cao lắm, ai ngờ mở app lại thấy đang sale cực mạnh luôn á! ${isFashionItem ? 'Chất liệu xịn, mặc vào vừa vặn' : 'Thiết kế đẹp mắt, dùng siêu mượt'} y như mơ ước của mình luôn 💕\n\nGiờ mình đang dùng thấy quá ưng ý! ${isFashionItem ? 'Vải mềm mại, form dáng chuẩn' : 'Tính năng đầy đủ, hiệu suất cao'}, ai nhìn cũng khen! Thích nhất là ${isFashionItem ? 'màu sắc sang trọng' : 'thiết kế tinh tế'}, mix match với gì cũng ok hết 🌟\n\nAi đang tìm ${isFashionItem ? 'outfit đẹp' : 'món đồ xịn'} thì nên sắm ngay nha! Deal này không biết còn lâu không nữa 🔥\n\n💬 Comment bên dưới nếu bạn thích nhé!\n👉 Tag hội chị em để cùng sắm đồ nào!\n💝 Share để lưu lại, đừng để lỡ deal này!`,
+        instagram: `Less is more. ✨\n\n${isFashionItem ? 'Style không cần la liếng, chỉ cần đúng điệu.' : 'Cuộc sống đơn giản hơn với công nghệ thông minh.'}\n\nKhi bạn tìm thấy thứ hoàn hảo, mọi thứ khác đều trở nên thừa. ${isFashionItem ? 'Một thiết kế tinh tế, một phong cách riêng biệt.' : 'Một sản phẩm chất lượng, một trải nghiệm khác biệt.'}\n\nKhông cần nhiều, chỉ cần đủ. 💫\n\n#Minimalist #LessIsMore #Style #Quality #Aesthetic #Luxury ${isFashionItem ? '#Fashion #OOTD' : '#Tech #Innovation'}`
+      }
     }
 
     setAnalysisResult(mockResult)
     setShowFashionForm(isFashionItem)
+    setMarketingContent(mockResult.marketingContent)
     setIsAnalyzing(false)
   }
 
@@ -690,6 +699,94 @@ export default function CyberWebapp() {
                           </div>
                         </div>
                       )}
+                    </motion.div>
+                  )}
+
+                  {/* Marketing Content Section */}
+                  {marketingContent && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="border border-cyber-warning p-6 glow-border mt-4"
+                    >
+                      <div className="flex items-center gap-3 mb-6">
+                        <Megaphone className="w-6 h-6 text-cyber-warning" />
+                        <h3 className="text-2xl font-bold text-cyber-warning">
+                          NỘI DUNG QUẢNG CÁO
+                        </h3>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        {/* Shopee/E-commerce Style */}
+                        <div className="border border-cyber-primary p-4 glow-border">
+                          <div className="flex items-center gap-2 mb-3">
+                            <ShoppingBag className="w-5 h-5 text-cyber-primary" />
+                            <h4 className="text-sm font-bold text-cyber-primary">
+                              SHOPEE / E-COMMERCE
+                            </h4>
+                          </div>
+                          <div className="relative">
+                            <p className="text-cyber-primary text-xs font-mono whitespace-pre-line h-64 overflow-y-auto">
+                              {marketingContent.shopee}
+                            </p>
+                            <button
+                              onClick={() => copyToClipboard(marketingContent.shopee)}
+                              className="absolute top-2 right-2 p-2 border border-cyber-primary text-cyber-primary hover:bg-cyber-primary hover:text-black transition-all"
+                              title="Copy Shopee Content"
+                            >
+                              <Copy className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Facebook/TikTok Style */}
+                        <div className="border border-cyber-secondary p-4 glow-border-cyan">
+                          <div className="flex items-center gap-2 mb-3">
+                            <MessageCircle className="w-5 h-5 text-cyber-secondary" />
+                            <h4 className="text-sm font-bold text-cyber-secondary">
+                              FACEBOOK / TIKTOK
+                            </h4>
+                          </div>
+                          <div className="relative">
+                            <p className="text-cyber-secondary text-xs font-mono whitespace-pre-line h-64 overflow-y-auto">
+                              {marketingContent.facebook}
+                            </p>
+                            <button
+                              onClick={() => copyToClipboard(marketingContent.facebook)}
+                              className="absolute top-2 right-2 p-2 border border-cyber-secondary text-cyber-secondary hover:bg-cyber-secondary hover:text-black transition-all"
+                              title="Copy Facebook Content"
+                            >
+                              <Copy className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Instagram/Luxury Style */}
+                        <div className="border border-cyber-accent p-4 glow-border">
+                          <div className="flex items-center gap-2 mb-3">
+                            <Instagram className="w-5 h-5 text-cyber-accent" />
+                            <h4 className="text-sm font-bold text-cyber-accent">
+                              INSTAGRAM / LUXURY
+                            </h4>
+                          </div>
+                          <div className="relative">
+                            <p className="text-cyber-accent text-xs font-mono whitespace-pre-line h-64 overflow-y-auto">
+                              {marketingContent.instagram}
+                            </p>
+                            <button
+                              onClick={() => copyToClipboard(marketingContent.instagram)}
+                              className="absolute top-2 right-2 p-2 border border-cyber-accent text-cyber-accent hover:bg-cyber-accent hover:text-black transition-all"
+                              title="Copy Instagram Content"
+                            >
+                              <Copy className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 text-xs text-cyber-secondary text-center">
+                        💡 Tip: Click nút Copy để sao chép nội dung và sử dụng trên các nền tảng tương ứng
+                      </div>
                     </motion.div>
                   )}
 
