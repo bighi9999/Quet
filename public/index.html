@@ -3,39 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Product Analyzer - Phân Tích & Tạo Prompt Tự Động</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>AI Product Analyzer - Unified Platform</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="unified.css">
 </head>
 <body>
+    <!-- Background -->
+    <div class="background-gradient"></div>
+    
+    <!-- Main Container -->
     <div class="app-container">
         <!-- Header -->
         <header class="app-header">
             <div class="header-content">
                 <div class="logo">
-                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
-                        <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z" 
-                              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M12 8v8M8 12h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                    </svg>
-                    <h1>AI Product Analyzer</h1>
+                    <i class="fas fa-brain"></i>
+                    <div class="logo-text">
+                        <h1>AI Product Analyzer</h1>
+                        <p>Unified Platform</p>
+                    </div>
                 </div>
-                <p class="subtitle">Phân tích sản phẩm & Tạo prompt AI tự động</p>
+                <div class="header-actions">
+                    <button class="btn-icon" id="themeToggle" title="Toggle Theme">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                    <button class="btn-icon" id="helpBtn" title="Help">
+                        <i class="fas fa-question-circle"></i>
+                    </button>
+                </div>
             </div>
         </header>
 
         <!-- Mode Selector -->
         <div class="mode-selector">
             <button class="mode-btn active" data-mode="prompt">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="currentColor" stroke-width="2"/>
-                </svg>
+                <i class="fas fa-wand-magic-sparkles"></i>
                 <span>Tạo Prompt AI</span>
+                <div class="mode-indicator"></div>
             </button>
             <button class="mode-btn" data-mode="analyze">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                    <path d="M9 2L3 8v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8l-6-6H9z" stroke="currentColor" stroke-width="2"/>
-                </svg>
+                <i class="fas fa-chart-line"></i>
                 <span>Phân Tích Sản Phẩm</span>
+                <div class="mode-indicator"></div>
             </button>
         </div>
 
@@ -44,109 +53,117 @@
             <!-- Prompt Generator Mode -->
             <div id="prompt-mode" class="mode-content active">
                 <div class="content-card">
-                    <h2 class="card-title">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="currentColor" stroke-width="2"/>
-                        </svg>
-                        AI Product Image Prompt Generator
-                    </h2>
-                    <p class="card-description">
-                        Tạo prompt tự động cho Stable Diffusion, Midjourney, DALL·E từ hình ảnh sản phẩm
-                    </p>
+                    <div class="card-header">
+                        <div class="card-icon">
+                            <i class="fas fa-wand-magic-sparkles"></i>
+                        </div>
+                        <div>
+                            <h2>AI Product Image Prompt Generator</h2>
+                            <p class="card-subtitle">Tạo prompt tối ưu cho Stable Diffusion, Midjourney, DALL·E từ hình ảnh sản phẩm</p>
+                        </div>
+                    </div>
 
                     <!-- Image Upload -->
                     <div class="upload-section">
-                        <div id="drop-zone" class="drop-zone">
-                            <input type="file" id="image-input" accept="image/*" style="display: none;">
-                            <div class="upload-icon">
-                                <svg width="64" height="64" viewBox="0 0 24 24" fill="none">
-                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" 
-                                          stroke="currentColor" stroke-width="2"/>
-                                </svg>
-                            </div>
+                        <input type="file" id="prompt-image-input" accept="image/*" style="display: none;">
+                        <div id="prompt-drop-zone" class="drop-zone">
+                            <i class="fas fa-cloud-upload-alt upload-icon"></i>
                             <h3>Kéo thả hình ảnh vào đây</h3>
-                            <p>hoặc</p>
-                            <button id="browse-btn" class="btn-browse">Chọn File</button>
-                            <p class="hint">JPG, PNG hoặc WebP (tối đa 10MB)</p>
+                            <p class="hint">hoặc</p>
+                            <button id="prompt-browse-btn" class="btn-browse">
+                                <i class="fas fa-folder-open"></i>
+                                Chọn File
+                            </button>
+                            <p class="file-hint">JPG, PNG hoặc WebP (tối đa 10MB)</p>
                         </div>
-                        <div id="preview-container" class="preview-container" style="display: none;">
-                            <img id="preview-image" alt="Preview">
-                            <button id="clear-image" class="btn-clear">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                                    <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2"/>
-                                </svg>
+                        <div id="prompt-preview-container" class="preview-container" style="display: none;">
+                            <img id="prompt-preview-image" alt="Preview">
+                            <button id="prompt-clear-image" class="btn-clear">
+                                <i class="fas fa-times"></i>
                             </button>
                         </div>
                     </div>
 
-                    <!-- Audience Input -->
+                    <!-- Target Audience -->
                     <div class="form-group">
                         <label>
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" 
-                                      stroke="currentColor" stroke-width="2"/>
-                            </svg>
+                            <i class="fas fa-users"></i>
                             Đối tượng khách hàng mục tiêu
                             <span class="optional">(Tùy chọn)</span>
                         </label>
-                        <textarea id="audience-input" 
+                        <textarea id="prompt-audience-input" 
                                   placeholder="VD: Phụ nữ 25-35 tuổi, phong cách đô thị hiện đại..."
                                   rows="3"
                                   maxlength="500"></textarea>
-                        <div class="char-count"><span id="char-count">0</span>/500</div>
-                    </div>
-
-                    <!-- Generator Selection -->
-                    <div class="form-group">
-                        <label>
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                                <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
-                                <path d="M12 1v6m0 6v6M5.64 5.64l4.24 4.24m4.24 4.24l4.24 4.24M1 12h6m6 0h6M5.64 18.36l4.24-4.24m4.24-4.24l4.24-4.24" 
-                                      stroke="currentColor" stroke-width="2"/>
-                            </svg>
-                            Tối ưu cho AI Generator
-                        </label>
-                        <div class="generator-grid">
-                            <label class="generator-option selected">
-                                <input type="radio" name="generator" value="stable-diffusion" checked>
-                                <span class="icon">🎨</span>
-                                <span class="label">Stable Diffusion</span>
-                                <span class="check">✓</span>
-                            </label>
-                            <label class="generator-option">
-                                <input type="radio" name="generator" value="midjourney">
-                                <span class="icon">✨</span>
-                                <span class="label">Midjourney</span>
-                                <span class="check">✓</span>
-                            </label>
-                            <label class="generator-option">
-                                <input type="radio" name="generator" value="dalle">
-                                <span class="icon">🤖</span>
-                                <span class="label">DALL·E</span>
-                                <span class="check">✓</span>
-                            </label>
+                        <div class="char-count">
+                            <span id="prompt-char-count">0</span>/500
                         </div>
                     </div>
 
+                    <!-- AI Models Info -->
+                    <div class="ai-models-info">
+                        <div class="info-header">
+                            <i class="fas fa-robot"></i>
+                            <span>Sử dụng tất cả AI models đồng thời</span>
+                        </div>
+                        <div class="models-grid">
+                            <div class="model-badge">
+                                <i class="fas fa-gem"></i>
+                                <span>Gemini Vision</span>
+                            </div>
+                            <div class="model-badge">
+                                <i class="fas fa-brain"></i>
+                                <span>Grok Vision</span>
+                            </div>
+                            <div class="model-badge">
+                                <i class="fas fa-magic"></i>
+                                <span>GPT-4 Vision</span>
+                            </div>
+                        </div>
+                        <p class="models-note">
+                            <i class="fas fa-info-circle"></i>
+                            Hệ thống sẽ tự động chọn kết quả tốt nhất từ tất cả models
+                        </p>
+                    </div>
+
                     <!-- Generate Button -->
-                    <button id="generate-btn" class="btn-primary" disabled>
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="currentColor" stroke-width="2"/>
-                        </svg>
-                        Tạo Prompt AI
+                    <button id="prompt-generate-btn" class="btn-primary" disabled>
+                        <i class="fas fa-wand-magic-sparkles"></i>
+                        <span>Tạo Prompt AI</span>
+                        <div class="btn-glow"></div>
                     </button>
 
                     <!-- Loading State -->
-                    <div id="loading-state" class="loading-state" style="display: none;">
-                        <div class="spinner"></div>
-                        <p>Đang phân tích hình ảnh và tạo prompt...</p>
-                        <div class="progress-bar">
-                            <div id="progress-fill" class="progress-fill"></div>
+                    <div id="prompt-loading" class="loading-state" style="display: none;">
+                        <div class="loading-content">
+                            <div class="spinner-container">
+                                <div class="spinner"></div>
+                                <i class="fas fa-robot spinner-icon"></i>
+                            </div>
+                            <h3>Đang xử lý...</h3>
+                            <p id="prompt-loading-text">Phân tích hình ảnh với AI...</p>
+                            <div class="progress-bar">
+                                <div id="prompt-progress-fill" class="progress-fill"></div>
+                            </div>
+                            <div class="loading-steps">
+                                <div class="step" data-step="1">
+                                    <i class="fas fa-image"></i>
+                                    <span>Phân tích hình ảnh</span>
+                                </div>
+                                <div class="step" data-step="2">
+                                    <i class="fas fa-robot"></i>
+                                    <span>Gọi AI models</span>
+                                </div>
+                                <div class="step" data-step="3">
+                                    <i class="fas fa-check-circle"></i>
+                                    <span>Chọn kết quả tốt nhất</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
                     <!-- Results -->
-                    <div id="results-container" class="results-container" style="display: none;">
+                    <div id="prompt-results" class="results-container" style="display: none;">
                         <!-- Will be populated by JavaScript -->
                     </div>
                 </div>
@@ -155,31 +172,125 @@
             <!-- Analyze Mode -->
             <div id="analyze-mode" class="mode-content">
                 <div class="content-card">
-                    <h2 class="card-title">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                            <path d="M9 2L3 8v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8l-6-6H9z" stroke="currentColor" stroke-width="2"/>
-                        </svg>
-                        AI Product Image Analyzer
-                    </h2>
-                    <p class="card-description">
-                        Phân tích chi tiết sản phẩm với Gemini, Grok hoặc GPT-4 Vision
-                    </p>
+                    <div class="card-header">
+                        <div class="card-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div>
+                            <h2>AI Product Image Analyzer</h2>
+                            <p class="card-subtitle">Phân tích chi tiết sản phẩm với Gemini, Grok hoặc GPT-4 Vision</p>
+                        </div>
+                    </div>
 
-                    <!-- Coming from v4.html content -->
-                    <div class="analyze-content">
-                        <p class="info-message">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
-                                <path d="M12 16v-4M12 8h.01" stroke="currentColor" stroke-width="2"/>
-                            </svg>
-                            Chức năng phân tích sản phẩm với Gemini, Grok, GPT-4 Vision đang được tích hợp...
+                    <!-- AI Provider Selection -->
+                    <div class="provider-section">
+                        <label>
+                            <i class="fas fa-microchip"></i>
+                            Chọn AI Provider
+                        </label>
+                        <div class="provider-grid">
+                            <div class="provider-card" data-provider="gemini">
+                                <div class="provider-icon">
+                                    <i class="fas fa-gem"></i>
+                                </div>
+                                <h3>Google Gemini</h3>
+                                <p>Miễn phí, nhanh</p>
+                                <div class="provider-badge available">
+                                    <i class="fas fa-check-circle"></i>
+                                    Sẵn sàng
+                                </div>
+                            </div>
+                            <div class="provider-card" data-provider="grok">
+                                <div class="provider-icon">
+                                    <i class="fas fa-brain"></i>
+                                </div>
+                                <h3>xAI Grok</h3>
+                                <p>Phân tích sâu</p>
+                                <div class="provider-badge available">
+                                    <i class="fas fa-check-circle"></i>
+                                    Sẵn sàng
+                                </div>
+                            </div>
+                            <div class="provider-card" data-provider="openai">
+                                <div class="provider-icon">
+                                    <i class="fas fa-magic"></i>
+                                </div>
+                                <h3>GPT-4 Vision</h3>
+                                <p>Cần API key</p>
+                                <div class="provider-badge requires-key">
+                                    <i class="fas fa-key"></i>
+                                    API Key
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- API Key Input (for OpenAI) -->
+                    <div id="analyze-api-key-section" class="api-key-section" style="display: none;">
+                        <label>
+                            <i class="fas fa-key"></i>
+                            OpenAI API Key
+                        </label>
+                        <div class="input-group">
+                            <input type="password" 
+                                   id="analyze-api-key-input" 
+                                   placeholder="sk-...">
+                            <button id="analyze-toggle-key" class="btn-icon">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        <p class="hint">
+                            <i class="fas fa-info-circle"></i>
+                            API key của bạn an toàn, chỉ lưu trong phiên làm việc này
                         </p>
-                        <a href="/v4.html" class="btn-secondary">
-                            Truy cập phiên bản đầy đủ
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                                <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2"/>
-                            </svg>
-                        </a>
+                    </div>
+
+                    <!-- Image Upload -->
+                    <div class="upload-section">
+                        <input type="file" id="analyze-image-input" accept="image/*" style="display: none;">
+                        <div id="analyze-drop-zone" class="drop-zone">
+                            <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                            <h3>Kéo thả hình ảnh vào đây</h3>
+                            <p class="hint">hoặc</p>
+                            <button id="analyze-browse-btn" class="btn-browse">
+                                <i class="fas fa-folder-open"></i>
+                                Chọn File
+                            </button>
+                            <p class="file-hint">JPG, PNG hoặc WebP (tối đa 10MB)</p>
+                        </div>
+                        <div id="analyze-preview-container" class="preview-container" style="display: none;">
+                            <img id="analyze-preview-image" alt="Preview">
+                            <button id="analyze-clear-image" class="btn-clear">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Analyze Button -->
+                    <button id="analyze-btn" class="btn-primary" disabled>
+                        <i class="fas fa-chart-line"></i>
+                        <span>Phân Tích Sản Phẩm</span>
+                        <div class="btn-glow"></div>
+                    </button>
+
+                    <!-- Loading State -->
+                    <div id="analyze-loading" class="loading-state" style="display: none;">
+                        <div class="loading-content">
+                            <div class="spinner-container">
+                                <div class="spinner"></div>
+                                <i class="fas fa-robot spinner-icon"></i>
+                            </div>
+                            <h3>Đang phân tích...</h3>
+                            <p id="analyze-loading-text">AI đang phân tích sản phẩm...</p>
+                            <div class="progress-bar">
+                                <div id="analyze-progress-fill" class="progress-fill"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Results -->
+                    <div id="analyze-results" class="results-container" style="display: none;">
+                        <!-- Will be populated by JavaScript -->
                     </div>
                 </div>
             </div>
@@ -187,10 +298,61 @@
 
         <!-- Footer -->
         <footer class="app-footer">
-            <p>AI Product Analyzer © 2025 | Powered by Hugging Face, Gemini, Grok & OpenAI</p>
+            <div class="footer-content">
+                <p>
+                    <i class="fas fa-copyright"></i>
+                    2025 AI Product Analyzer | Unified Platform
+                </p>
+                <div class="footer-links">
+                    <a href="#" id="aboutLink">
+                        <i class="fas fa-info-circle"></i>
+                        About
+                    </a>
+                    <a href="https://github.com/bighi9999/Quet" target="_blank">
+                        <i class="fab fa-github"></i>
+                        GitHub
+                    </a>
+                </div>
+            </div>
         </footer>
     </div>
 
-    <script src="app.js"></script>
+    <!-- Help Modal -->
+    <div id="helpModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>
+                    <i class="fas fa-question-circle"></i>
+                    Hướng dẫn sử dụng
+                </h2>
+                <button class="modal-close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="help-section">
+                    <h3><i class="fas fa-wand-magic-sparkles"></i> Tạo Prompt AI</h3>
+                    <ol>
+                        <li>Upload ảnh sản phẩm</li>
+                        <li>(Tùy chọn) Nhập đối tượng khách hàng mục tiêu</li>
+                        <li>Click "Tạo Prompt AI"</li>
+                        <li>Hệ thống sẽ gọi tất cả AI models và chọn kết quả tốt nhất</li>
+                        <li>Nhận prompt tối ưu cho SD, MJ, DALL·E</li>
+                    </ol>
+                </div>
+                <div class="help-section">
+                    <h3><i class="fas fa-chart-line"></i> Phân Tích Sản Phẩm</h3>
+                    <ol>
+                        <li>Chọn AI Provider (Gemini, Grok, hoặc GPT-4)</li>
+                        <li>Upload ảnh sản phẩm</li>
+                        <li>Click "Phân Tích Sản Phẩm"</li>
+                        <li>Xem kết quả phân tích chi tiết</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="unified.js"></script>
 </body>
 </html>
