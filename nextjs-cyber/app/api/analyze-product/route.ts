@@ -270,9 +270,10 @@ export async function POST(request: NextRequest) {
         if (modelConfig.type === 'api' && modelId === 'gemini') {
           result = await queryGemini(imageBase64, productName)
         } else if (modelConfig.type === 'huggingface') {
+          const hfConfig = modelConfig as { endpoint: string; token: string }
           result = await queryHuggingFace(
-            modelConfig.endpoint!,
-            modelConfig.token!,
+            hfConfig.endpoint,
+            hfConfig.token,
             imageBase64,
             productName
           )
