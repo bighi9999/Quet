@@ -6,8 +6,10 @@ import { Bot, X, Cpu, HardDrive, Activity, Zap } from 'lucide-react';
 interface SystemStats {
   cpu: number;
   memory: number;
+  memoryTotal: number;
   requests: number;
   uptime: string;
+  status: string;
 }
 
 export default function FloatingAIBot() {
@@ -15,20 +17,53 @@ export default function FloatingAIBot() {
   const [stats, setStats] = useState<SystemStats>({
     cpu: 0,
     memory: 0,
+    memoryTotal: 0,
     requests: 0,
-    uptime: '0h 0m'
+    uptime: '0h 0m',
+    status: 'LOADING'
   });
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  // Simulate system stats (replace with real API call if needed)
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setStats({
-        cpu: Math.floor(Math.random() * 40) + 20, // 20-60%
-        memory: Math.floor(Math.random() * 30) + 40, // 40-70%
-        requests: Math.floor(Math.random() * 100) + 200,
-        uptime: '24h 15m'
+  // Fetch real system stats from API
+  const fetchSystemHealth = async () => {
+    try {
+      const response = await fetch('/api/system-health', {
+        cache: 'no-store'
       });
-    }, 3000);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch system health');
+      }
+      
+      const data = await response.json();
+      
+      setStats({
+        cpu: data.cpu_usage || 0,
+        memory: data.ram_usage_percent || 0,
+        memoryTotal: data.ram_total || 0,
+        requests: Math.floor(Math.random() * 100) + 200, // Mock requests count
+        uptime: data.uptime || '0h 0m',
+        status: data.status || 'UNKNOWN'
+      });
+      
+      setIsLoading(false);
+      setError('');
+    } catch (err) {
+      console.error('Failed to fetch system health:', err);
+      setError('Unable to fetch stats');
+      setIsLoading(false);
+    }
+  };
+
+  // Initial fetch and periodic updates
+  useEffect(() => {
+    fetchSystemHealth();
+    
+    // Update every 5 seconds
+    const interval = setInterval(() => {
+      fetchSystemHealth();
+    }, 5000);
 
     return () => clearInterval(interval);
   }, []);
@@ -80,9 +115,41 @@ export default function FloatingAIBot() {
         {/* Content */}
         <div className="p-6 space-y-6">
           {/* Status Message */}
-          <div className="bg-gradient-to-r from-cyan-500/10 to-purple-500/10 border border-cyan-500/30 rounded-lg p-4">
-            <p className="text-sm text-cyan-400 font-medium">✨ All systems operational</p>
-            <p className="text-xs text-gray-400 mt-1">Google Cloud APIs ready</p>
+          <div className={`bg-gradient-to-r rounded-lg p-4 border ${
+            error 
+              ? 'from-red-500/10 to-orange-500/10 border-red-500/30'
+              : stats.status === 'CRITICAL'
+              ? 'from-red-500/10 to-orange-500/10 border-red-500/30'
+              : stats.status === 'WARNING'
+              ? 'from-yellow-500/10 to-orange-500/10 border-yellow-500/30'
+              : 'from-cyan-500/10 to-purple-500/10 border-cyan-500/30'
+          }`}>
+            {error ? (
+              <>
+                <p className="text-sm text-red-400 font-medium">⚠️ Unable to fetch stats</p>
+                <p className="text-xs text-gray-400 mt-1">{error}</p>
+              </>
+            ) : isLoading ? (
+              <>
+                <p className="text-sm text-gray-400 font-medium">⏳ Loading system status...</p>
+                <p className="text-xs text-gray-400 mt-1">Please wait</p>
+              </>
+            ) : (
+              <>
+                <p className={`text-sm font-medium ${
+                  stats.status === 'CRITICAL' ? 'text-red-400'
+                  : stats.status === 'WARNING' ? 'text-yellow-400'
+                  : 'text-cyan-400'
+                }`}>
+                  {stats.status === 'CRITICAL' ? '🔴 Critical - High Usage'
+                   : stats.status === 'WARNING' ? '⚠️ Warning - Elevated Usage'
+                   : '✨ All systems operational'}
+                </p>
+                <p className="text-xs text-gray-400 mt-1">
+                  {stats.memoryTotal > 0 ? `Total RAM: ${stats.memoryTotal.toFixed(1)}GB` : 'Google Cloud APIs ready'}
+                </p>
+              </>
+            )}
           </div>
 
           {/* System Stats */}
@@ -93,15 +160,21 @@ export default function FloatingAIBot() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
-                  <Cpu className="w-4 h-4 text-cyan-400" />
+                  <Cpu className={`w-4 h-4 ${stats.cpu > 80 ? 'text-red-400' : 'text-cyan-400'}`} />
                   <span className="text-sm text-gray-300">CPU Usage</span>
                 </div>
-                <span className="text-sm font-bold text-cyan-400">{stats.cpu}%</span>
+                <span className={`text-sm font-bold ${stats.cpu > 80 ? 'text-red-400' : 'text-cyan-400'}`}>
+                  {stats.cpu}%
+                </span>
               </div>
               <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-gradient-to-r from-cyan-500 to-purple-600 transition-all duration-500"
-                  style={{ width: `${stats.cpu}%` }}
+                  className={`h-full transition-all duration-500 ${
+                    stats.cpu > 80 
+                      ? 'bg-gradient-to-r from-red-500 to-orange-600' 
+                      : 'bg-gradient-to-r from-cyan-500 to-purple-600'
+                  }`}
+                  style={{ width: `${Math.min(stats.cpu, 100)}%` }}
                 ></div>
               </div>
             </div>
@@ -110,15 +183,21 @@ export default function FloatingAIBot() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
-                  <HardDrive className="w-4 h-4 text-purple-400" />
+                  <HardDrive className={`w-4 h-4 ${stats.memory > 80 ? 'text-red-400' : 'text-purple-400'}`} />
                   <span className="text-sm text-gray-300">Memory</span>
                 </div>
-                <span className="text-sm font-bold text-purple-400">{stats.memory}%</span>
+                <span className={`text-sm font-bold ${stats.memory > 80 ? 'text-red-400' : 'text-purple-400'}`}>
+                  {stats.memory}%
+                </span>
               </div>
               <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-gradient-to-r from-purple-500 to-pink-600 transition-all duration-500"
-                  style={{ width: `${stats.memory}%` }}
+                  className={`h-full transition-all duration-500 ${
+                    stats.memory > 80 
+                      ? 'bg-gradient-to-r from-red-500 to-orange-600' 
+                      : 'bg-gradient-to-r from-purple-500 to-pink-600'
+                  }`}
+                  style={{ width: `${Math.min(stats.memory, 100)}%` }}
                 ></div>
               </div>
             </div>
