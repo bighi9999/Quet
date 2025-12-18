@@ -103,6 +103,75 @@ export default function ProductAnalyzer() {
       setApiKeyMissing(!hasApiKey(selectedProvider))
     }
   }, [selectedProvider, mounted])
+
+  /**
+   * Smart Result Renderer
+   * Handles multiple data formats from different AI providers
+   * - Structured JSON objects with title/description
+   * - Plain text strings
+   * - JSON strings that need parsing
+   */
+  const renderSmartResult = (data: any): JSX.Element => {
+    // Handle null/undefined
+    if (!data) {
+      return <p className="text-gray-400 italic">No data available</p>
+    }
+
+    // Handle objects with title/description (Gemini 2.0 format)
+    if (typeof data === 'object' && data !== null) {
+      if (data.title || data.description) {
+        return (
+          <div className="structured-result space-y-3">
+            {data.title && (
+              <h3 className="text-2xl font-bold text-cyber-primary glow-text mb-3 flex items-center gap-2">
+                <Sparkles className="w-6 h-6" />
+                {data.title}
+              </h3>
+            )}
+            {data.description && (
+              <div className="text-gray-300 leading-relaxed whitespace-pre-line border-l-4 border-cyber-primary pl-4">
+                {data.description}
+              </div>
+            )}
+          </div>
+        )
+      }
+      
+      // If it's an object but not in expected format, try to stringify it nicely
+      try {
+        return (
+          <pre className="text-sm text-gray-300 whitespace-pre-wrap overflow-auto max-h-96 bg-black/30 p-4 rounded border border-cyber-primary/30">
+            {JSON.stringify(data, null, 2)}
+          </pre>
+        )
+      } catch (e) {
+        return <p className="text-red-400">Unable to render object data</p>
+      }
+    }
+
+    // Handle strings
+    if (typeof data === 'string') {
+      // Try to parse as JSON first
+      try {
+        const parsed = JSON.parse(data)
+        if (typeof parsed === 'object' && parsed !== null) {
+          return renderSmartResult(parsed)
+        }
+      } catch (e) {
+        // Not JSON, continue with string rendering
+      }
+
+      // Regular string rendering with formatting
+      return (
+        <div className="text-gray-300 leading-relaxed whitespace-pre-wrap">
+          {data}
+        </div>
+      )
+    }
+
+    // Fallback for other types
+    return <p className="text-gray-400">{String(data)}</p>
+  }
   
   const AVAILABLE_MODELS = [
     { id: 'gemini', name: 'Gemini 1.5 Flash', provider: 'Google', icon: '🔷' },
@@ -226,30 +295,56 @@ export default function ProductAnalyzer() {
       }
 
       // Parse result text into structured format
-      const resultText = data.result || ''
+      let resultText = data.result || ''
+      let parsedResult: any = null
       
-      // Simple parsing - you can enhance this
+      // Try to parse JSON response (Gemini 2.0 may return structured data)
+      if (typeof resultText === 'string') {
+        try {
+          parsedResult = JSON.parse(resultText)
+        } catch (e) {
+          // Not JSON, use as plain text
+          parsedResult = null
+        }
+      } else if (typeof resultText === 'object') {
+        // Already an object
+        parsedResult = resultText
+      }
+      
+      // Extract data intelligently
+      const productType = parsedResult?.title || parsedResult?.productType || productName || 'Product'
+      const description = parsedResult?.description || resultText
+      const features = parsedResult?.keyFeatures || parsedResult?.features || [description.substring(0, 200)]
+      
       setAnalysisResult({
-        productType: productName || 'Product',
-        keyFeatures: [resultText.substring(0, 200)],
-        colors: ['#000000'],
-        visualStyle: 'Modern',
-        aiPrompt: resultText,
-        negativePrompt: 'low quality, blurry',
-        confidence: 85,
+        productType,
+        keyFeatures: Array.isArray(features) ? features : [features],
+        colors: parsedResult?.colors || ['#000000'],
+        visualStyle: parsedResult?.visualStyle || parsedResult?.style || 'Modern',
+        aiPrompt: parsedResult || resultText, // Store structured data or plain text
+        negativePrompt: parsedResult?.negativePrompt || 'low quality, blurry',
+        confidence: parsedResult?.confidence || 85,
         processingTime: data.processingTime || 0,
         models: [selectedModel],
-        isFashion: false,
+        isFashion: parsedResult?.isFashion || false,
         marketingContent: {
-          shopee: { title: productName || 'Sản phẩm chất lượng', description: resultText.substring(0, 100) }
+          shopee: { 
+            title: productType, 
+            description: typeof description === 'string' ? description.substring(0, 100) : String(description).substring(0, 100)
+          }
         },
-        fullText: resultText
+        fullText: typeof resultText === 'string' ? resultText : JSON.stringify(resultText, null, 2)
       })
       
+      // Generate marketing content
+      const marketingDesc = typeof description === 'string' ? description : String(description)
       setMarketingContent({
-        shopee: { title: productName || 'Sản phẩm chất lượng', description: resultText.substring(0, 100) },
-        facebook: { caption: resultText.substring(0, 150) },
-        instagram: { caption: resultText.substring(0, 150) }
+        shopee: { 
+          title: productType, 
+          description: marketingDesc.substring(0, 100) 
+        },
+        facebook: { caption: marketingDesc.substring(0, 150) },
+        instagram: { caption: marketingDesc.substring(0, 150) }
       })
 
     } catch (error: any) {
@@ -775,9 +870,11 @@ export default function ProductAnalyzer() {
                         <span className="text-cyber-secondary text-sm">
                           PHONG CÁCH THIẾT KẾ:
                         </span>
-                        <p className="text-cyber-primary">
-                          {analysisResult.visualStyle}
-                        </p>
+                        <div className="text-cyber-primary">
+                          {typeof analysisResult.visualStyle === 'string' 
+                            ? analysisResult.visualStyle 
+                            : renderSmartResult(analysisResult.visualStyle)}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -806,9 +903,9 @@ export default function ProductAnalyzer() {
                         </button>
                       </div>
                     </div>
-                    <p className="text-cyber-primary text-sm font-mono">
-                      {analysisResult.aiPrompt}
-                    </p>
+                    <div className="text-cyber-primary text-sm">
+                      {renderSmartResult(analysisResult.aiPrompt)}
+                    </div>
                   </div>
 
                   {/* Negative Prompt */}
@@ -824,9 +921,9 @@ export default function ProductAnalyzer() {
                         <Copy className="w-4 h-4" />
                       </button>
                     </div>
-                    <p className="text-cyber-danger text-sm font-mono">
-                      {analysisResult.negativePrompt}
-                    </p>
+                    <div className="text-cyber-danger text-sm">
+                      {renderSmartResult(analysisResult.negativePrompt)}
+                    </div>
                   </div>
 
                   {/* Model Generator (lines 841-1012 from original) */}
