@@ -53,10 +53,10 @@ const NAV_ITEMS: NavItem[] = [
     href: '/tools/tts'
   },
   {
-    id: 'tools',
-    label: 'Công Cụ',
+    id: 'settings',
+    label: '⚙️ Cài Đặt AI',
     icon: <Settings className="w-5 h-5" />,
-    href: '/tools'
+    href: '/settings'
   }
 ];
 

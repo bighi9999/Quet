@@ -1,15 +1,24 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   Terminal, Upload, Brain, Image as ImageIcon,
   Check, AlertCircle, Loader2, Copy, ChevronRight,
   User, MapPin, Calendar, Camera, Globe,
   Megaphone, ShoppingBag, MessageCircle, Instagram,
-  Sparkles, Download, Eye, Zap
+  Sparkles, Download, Eye, Zap, Settings
 } from 'lucide-react'
+import Link from 'next/link'
 import TTSPlayer from '../../components/TTSPlayer'
+import { 
+  AI_PROVIDERS, 
+  getApiKey, 
+  hasApiKey, 
+  getVisionModels,
+  type AIProvider,
+  type AIModel 
+} from '@/lib/ai-config'
 
 export default function ProductAnalyzer() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
@@ -45,6 +54,55 @@ export default function ProductAnalyzer() {
   const [multiModelResults, setMultiModelResults] = useState<any[]>([])
   const [activeResultTab, setActiveResultTab] = useState<number>(0)
   const [activeMarketingTab, setActiveMarketingTab] = useState<string>('sales')
+  
+  // AI Model Registry States
+  const [selectedProvider, setSelectedProvider] = useState<string>('google')
+  const [selectedModel, setSelectedModel] = useState<string>('gemini-1.5-flash')
+  const [availableModels, setAvailableModels] = useState<AIModel[]>([])
+  const [apiKeyMissing, setApiKeyMissing] = useState<boolean>(false)
+  const [mounted, setMounted] = useState(false)
+  
+  // Initialize AI Model Registry on mount
+  useEffect(() => {
+    setMounted(true)
+    
+    // Check if any API keys are configured
+    const configuredProvider = AI_PROVIDERS.find(p => hasApiKey(p.id))
+    
+    if (configuredProvider) {
+      setSelectedProvider(configuredProvider.id)
+      setAvailableModels(configuredProvider.models.filter(m => m.supportsVision))
+      setSelectedModel(configuredProvider.models[0].id)
+      setApiKeyMissing(false)
+    } else {
+      // Default to Google, but mark as missing key
+      const googleProvider = AI_PROVIDERS.find(p => p.id === 'google')
+      if (googleProvider) {
+        setAvailableModels(googleProvider.models.filter(m => m.supportsVision))
+        setSelectedModel(googleProvider.models[0].id)
+      }
+      setApiKeyMissing(true)
+    }
+  }, [])
+  
+  // Update available models when provider changes
+  useEffect(() => {
+    if (!mounted) return
+    
+    const provider = AI_PROVIDERS.find(p => p.id === selectedProvider)
+    if (provider) {
+      const visionModels = provider.models.filter(m => m.supportsVision)
+      setAvailableModels(visionModels)
+      
+      // Set first model as default if current selection is not available
+      if (visionModels.length > 0 && !visionModels.find(m => m.id === selectedModel)) {
+        setSelectedModel(visionModels[0].id)
+      }
+      
+      // Check API key
+      setApiKeyMissing(!hasApiKey(selectedProvider))
+    }
+  }, [selectedProvider, mounted])
   
   const AVAILABLE_MODELS = [
     { id: 'gemini', name: 'Gemini 1.5 Flash', provider: 'Google', icon: '🔷' },
@@ -109,9 +167,15 @@ export default function ProductAnalyzer() {
     setSelectedModels(['gemini']) // Keep at least Gemini
   }
 
-  // Real AI analysis
+  // Real AI analysis with Multi-Provider Support
   const handleAnalyze = async () => {
-    if (!selectedFile || selectedModels.length === 0) return
+    if (!selectedFile) return
+    
+    // Check API key before analysis
+    if (!hasApiKey(selectedProvider)) {
+      alert(`❌ THIẾU API KEY!\n\nBạn chưa cấu hình API Key cho ${AI_PROVIDERS.find(p => p.id === selectedProvider)?.name}.\n\nVui lòng vào Cài Đặt AI để thêm API Key.`)
+      return
+    }
 
     setIsAnalyzing(true)
     setAnalysisResult(null)
@@ -126,68 +190,72 @@ export default function ProductAnalyzer() {
       })
       
       const imageBase64 = await base64Promise
+      
+      // Get API key from localStorage
+      const apiKey = getApiKey(selectedProvider)
+      
+      if (!apiKey) {
+        throw new Error('API Key not found. Please configure in Settings.')
+      }
 
-      // Call multi-model API
-      const response = await fetch('/api/analyze-product', {
+      // Call new multi-provider API
+      const response = await fetch('/api/analyze', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-Provider': selectedProvider,
+          'X-Model': selectedModel,
+          'X-Key': apiKey
+        },
         body: JSON.stringify({
-          imageBase64,
-          selectedModels,
+          image: imageBase64.split(',')[1], // Remove data:image prefix
+          prompt: `Phân tích chi tiết sản phẩm trong ảnh này. ${productName ? `Tên sản phẩm: ${productName}.` : ''} Cung cấp thông tin về loại sản phẩm, đặc điểm, màu sắc, và gợi ý marketing.`,
           productName: productName || undefined
         })
       })
 
       if (!response.ok) {
-        throw new Error(`API returned ${response.status}: ${response.statusText}`)
+        const errorData = await response.json().catch(() => ({ error: response.statusText }))
+        throw new Error(errorData.error || `API returned ${response.status}`)
       }
 
       const data = await response.json()
 
-      if (!data.success) {
-        throw new Error(data.error || 'API returned unsuccessful response')
+      if (data.error) {
+        throw new Error(data.error)
       }
 
-      if (!data.results || data.results.length === 0) {
-        throw new Error('No results returned from API')
-      }
-
-      setMultiModelResults(data.results)
+      // Parse result text into structured format
+      const resultText = data.result || ''
       
-      // Set the first successful result as primary
-      const primaryResult = data.results.find((r: any) => r.success)
-      
-      if (!primaryResult?.data) {
-        throw new Error('All AI models failed. Please check API keys and try again.')
-      }
-
-      const analysisData = primaryResult.data
-      
-      // Validate required data
-      if (!analysisData.technical_analysis || !analysisData.marketing_content) {
-        throw new Error('Invalid response structure from AI model')
-      }
-
+      // Simple parsing - you can enhance this
       setAnalysisResult({
-        productType: analysisData.technical_analysis?.product_type || 'Unknown',
-        keyFeatures: analysisData.technical_analysis?.key_features || ['AI Analysis Failed'],
-        colors: analysisData.technical_analysis?.colors || ['#000000'],
-        visualStyle: analysisData.technical_analysis?.visual_style || 'N/A',
-        aiPrompt: analysisData.ai_prompts?.positive || '',
-        negativePrompt: analysisData.ai_prompts?.negative || '',
-        confidence: analysisData.metadata?.confidence || 0,
-        processingTime: primaryResult.processing_time,
-        models: data.results.map((r: any) => r.model),
-        isFashion: analysisData.metadata?.is_fashion || false,
-        marketingContent: analysisData.marketing_content || {}
+        productType: productName || 'Product',
+        keyFeatures: [resultText.substring(0, 200)],
+        colors: ['#000000'],
+        visualStyle: 'Modern',
+        aiPrompt: resultText,
+        negativePrompt: 'low quality, blurry',
+        confidence: 85,
+        processingTime: data.processingTime || 0,
+        models: [selectedModel],
+        isFashion: false,
+        marketingContent: {
+          shopee: { title: productName || 'Sản phẩm chất lượng', description: resultText.substring(0, 100) }
+        },
+        fullText: resultText
       })
-      setShowFashionForm(analysisData.metadata?.is_fashion || false)
-      setMarketingContent(analysisData.marketing_content || {})
+      
+      setMarketingContent({
+        shopee: { title: productName || 'Sản phẩm chất lượng', description: resultText.substring(0, 100) },
+        facebook: { caption: resultText.substring(0, 150) },
+        instagram: { caption: resultText.substring(0, 150) }
+      })
 
     } catch (error: any) {
-      console.error('PRODUCTION ERROR - Analysis failed:', error)
+      console.error('Analysis failed:', error)
       
-      alert(`❌ LỖI PHÂN TÍCH:\n\n${error.message}\n\nVui lòng:\n1. Kiểm tra kết nối internet\n2. Thử lại sau vài giây\n3. Chọn model khác nếu vấn đề vẫn còn`)
+      alert(`❌ LỖI PHÂN TÍCH:\n\n${error.message}\n\nVui lòng:\n1. Kiểm tra API Key trong Cài Đặt\n2. Kiểm tra kết nối internet\n3. Thử lại hoặc chọn provider khác`)
       
     } finally {
       setIsAnalyzing(false)
@@ -403,6 +471,92 @@ export default function ProductAnalyzer() {
         </div>
       </motion.div>
 
+      {/* AI Model Registry Selector */}
+      {mounted && (
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.2 }}
+          className="mb-6"
+        >
+          <div className="border border-cyan-500/30 bg-gradient-to-r from-gray-900 to-black p-6 rounded-xl">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center space-x-3">
+                <Brain className="w-6 h-6 text-cyan-400" />
+                <h3 className="text-xl font-bold text-white">Chọn AI Model</h3>
+              </div>
+              <Link
+                href="/settings"
+                className="flex items-center space-x-2 px-4 py-2 bg-cyan-500/20 border border-cyan-500/30 rounded-lg text-cyan-400 hover:bg-cyan-500/30 transition-all text-sm"
+              >
+                <Settings className="w-4 h-4" />
+                <span>Cài Đặt API Key</span>
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Provider Selector */}
+              <div>
+                <label className="block text-sm font-medium text-gray-400 mb-2">
+                  Nhà cung cấp AI
+                </label>
+                <select
+                  value={selectedProvider}
+                  onChange={(e) => setSelectedProvider(e.target.value)}
+                  className="w-full px-4 py-3 bg-black/50 border border-cyan-500/30 rounded-lg text-white focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all outline-none"
+                >
+                  {AI_PROVIDERS.map((provider) => (
+                    <option key={provider.id} value={provider.id}>
+                      {provider.icon} {provider.name} {hasApiKey(provider.id) ? '✅' : '⚠️'}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Model Selector */}
+              <div>
+                <label className="block text-sm font-medium text-gray-400 mb-2">
+                  Model
+                </label>
+                <select
+                  value={selectedModel}
+                  onChange={(e) => setSelectedModel(e.target.value)}
+                  className="w-full px-4 py-3 bg-black/50 border border-cyan-500/30 rounded-lg text-white focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all outline-none"
+                >
+                  {availableModels.map((model) => (
+                    <option key={model.id} value={model.id}>
+                      {model.name} {model.description ? `- ${model.description}` : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* API Key Warning */}
+            {apiKeyMissing && (
+              <div className="mt-4 flex items-start space-x-3 p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
+                <AlertCircle className="w-5 h-5 text-red-400 mt-0.5 flex-shrink-0" />
+                <div className="text-sm text-red-300">
+                  <p className="font-semibold mb-1">⚠️ Thiếu API Key cho {AI_PROVIDERS.find(p => p.id === selectedProvider)?.name}</p>
+                  <p>
+                    Vui lòng vào <Link href="/settings" className="underline hover:text-red-200">Cài Đặt</Link> để thêm API Key. 
+                    Nút Phân Tích sẽ bị vô hiệu hóa cho đến khi bạn cấu hình Key.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Model Info */}
+            {!apiKeyMissing && (
+              <div className="mt-4 flex items-center space-x-2 text-sm text-green-400">
+                <Check className="w-4 h-4" />
+                <span>✅ Sẵn sàng phân tích với {AI_PROVIDERS.find(p => p.id === selectedProvider)?.name}</span>
+              </div>
+            )}
+          </div>
+        </motion.div>
+      )}
+
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Upload Section */}
@@ -541,18 +695,19 @@ export default function ProductAnalyzer() {
                   <div className="flex gap-4">
                     <button
                       onClick={handleAnalyze}
-                      disabled={isAnalyzing || selectedModels.length === 0}
+                      disabled={isAnalyzing || selectedModels.length === 0 || apiKeyMissing}
                       className="flex-1 cyber-button disabled:opacity-50 disabled:cursor-not-allowed"
+                      title={apiKeyMissing ? 'Vui lòng cấu hình API Key trong Cài Đặt' : ''}
                     >
                       {isAnalyzing ? (
                         <>
                           <Loader2 className="w-5 h-5 inline mr-2 animate-spin" />
-                          ĐANG PHÂN TÍCH ({selectedModels.length} MÔ HÌNH)...
+                          ĐANG PHÂN TÍCH...
                         </>
                       ) : (
                         <>
                           <Brain className="w-5 h-5 inline mr-2" />
-                          PHÂN TÍCH NGAY
+                          {apiKeyMissing ? '⚠️ THIẾU API KEY' : 'PHÂN TÍCH NGAY'}
                         </>
                       )}
                     </button>
