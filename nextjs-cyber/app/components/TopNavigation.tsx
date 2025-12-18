@@ -10,7 +10,8 @@ import {
   Mic, 
   Settings,
   Menu,
-  X
+  X,
+  Scan
 } from 'lucide-react';
 
 interface NavItem {
@@ -26,6 +27,12 @@ const NAV_ITEMS: NavItem[] = [
     label: 'Dashboard',
     icon: <Home className="w-5 h-5" />,
     href: '/'
+  },
+  {
+    id: 'product-analyzer',
+    label: '🔍 Phân Tích SP',
+    icon: <Scan className="w-5 h-5" />,
+    href: '/tools/product-analyzer'
   },
   {
     id: 'image-gen',

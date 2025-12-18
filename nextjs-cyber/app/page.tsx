@@ -1,63 +1,17 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { useState, useEffect } from 'react'
+import { motion } from 'framer-motion'
+import Link from 'next/link'
 import { 
-  Terminal, Upload, Cpu, Server, Database, Shield, 
-  Activity, Zap, Eye, Brain, Image as ImageIcon,
-  Check, AlertCircle, Loader2, Copy, ChevronRight,
-  User, MapPin, Calendar, Camera, Globe,
-  Megaphone, ShoppingBag, MessageCircle, Instagram,
-  Sparkles, Download
+  Terminal, Cpu, Server, Activity, Zap, Shield,
+  Check, Loader2, ChevronRight, Brain,
+  Scan, Image as ImageIcon, Video, Mic, Sparkles
 } from 'lucide-react'
-import TTSPlayer from './components/TTSPlayer'
 
-export default function CyberWebapp() {
+export default function Dashboard() {
   const [bootComplete, setBootComplete] = useState(false)
   const [bootProgress, setBootProgress] = useState(0)
-  const [selectedFile, setSelectedFile] = useState<File | null>(null)
-  const [previewUrl, setPreviewUrl] = useState<string>('')
-  const [isDragging, setIsDragging] = useState(false)
-  const [isAnalyzing, setIsAnalyzing] = useState(false)
-  const [analysisResult, setAnalysisResult] = useState<any>(null)
-  const [showFashionForm, setShowFashionForm] = useState(false)
-  const [fashionOptions, setFashionOptions] = useState({
-    gender: 'female',
-    ethnicity: 'vietnam',
-    ageGroup: 'genz',
-    background: 'studio',
-    shotType: 'full'
-  })
-  const [fashionPrompt, setFashionPrompt] = useState({ en: '', vi: '' })
-  const [showVietnamese, setShowVietnamese] = useState(false)
-  const [marketingContent, setMarketingContent] = useState<any>(null)
-  const [isGeneratingMarketing, setIsGeneratingMarketing] = useState(false)
-  const [isGeneratingModel, setIsGeneratingModel] = useState(false)
-  const [generatedModelImage, setGeneratedModelImage] = useState<string>('')
-  const [studioConfig, setStudioConfig] = useState({
-    gender: 'female',
-    ethnicity: 'vietnam',
-    age: 'genz',
-    background: 'studio',
-    aspectRatio: '9:16'
-  })
-  
-  // New Multi-Model System States
-  const [productName, setProductName] = useState<string>('')
-  const [selectedModels, setSelectedModels] = useState<string[]>(['gemini'])
-  const [multiModelResults, setMultiModelResults] = useState<any[]>([])
-  const [activeResultTab, setActiveResultTab] = useState<number>(0)
-  const [activeMarketingTab, setActiveMarketingTab] = useState<string>('sales')
-  
-  const AVAILABLE_MODELS = [
-    { id: 'gemini', name: 'Gemini 1.5 Flash', provider: 'Google', icon: '🔷' },
-    { id: 'qwen2', name: 'Qwen2-VL-7B', provider: 'Alibaba', icon: '🔶' },
-    { id: 'llama', name: 'Llama 3.2 11B', provider: 'Meta', icon: '🦙' },
-    { id: 'pixtral', name: 'Pixtral 12B', provider: 'Mistral', icon: '🌟' },
-    { id: 'molmo', name: 'Molmo 7B', provider: 'Allen AI', icon: '🧠' },
-    { id: 'phi', name: 'Phi-3.5 Vision', provider: 'Microsoft', icon: '💠' },
-    { id: 'yi', name: 'Yi-VL-34B', provider: '01.AI', icon: '🎯' }
-  ]
 
   // Boot sequence animation
   useEffect(() => {
@@ -85,336 +39,6 @@ export default function CyberWebapp() {
     return () => clearInterval(interval)
   }, [])
 
-  // Handle file selection
-  const handleFileChange = useCallback((file: File) => {
-    if (file && file.type.startsWith('image/')) {
-      setSelectedFile(file)
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        setPreviewUrl(e.target?.result as string)
-      }
-      reader.readAsDataURL(file)
-    }
-  }, [])
-
-  // Handle drag and drop
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragging(true)
-  }, [])
-
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragging(false)
-  }, [])
-
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragging(false)
-    const file = e.dataTransfer.files[0]
-    if (file) handleFileChange(file)
-  }, [handleFileChange])
-
-  // Handle file input
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) handleFileChange(file)
-  }
-
-  // Handle model selection
-  const toggleModel = (modelId: string) => {
-    setSelectedModels(prev => 
-      prev.includes(modelId) 
-        ? prev.filter(id => id !== modelId)
-        : [...prev, modelId]
-    )
-  }
-  
-  const selectAllModels = () => {
-    setSelectedModels(AVAILABLE_MODELS.map(m => m.id))
-  }
-  
-  const deselectAllModels = () => {
-    setSelectedModels(['gemini']) // Keep at least Gemini
-  }
-
-  // PRODUCTION: Real AI analysis ONLY - NO MOCK MODE
-  const handleAnalyze = async () => {
-    if (!selectedFile || selectedModels.length === 0) return
-
-    setIsAnalyzing(true)
-    setAnalysisResult(null)
-    setMultiModelResults([])
-
-    try {
-      // Convert image to base64
-      const reader = new FileReader()
-      const base64Promise = new Promise<string>((resolve) => {
-        reader.onload = (e) => resolve(e.target?.result as string)
-        reader.readAsDataURL(selectedFile)
-      })
-      
-      const imageBase64 = await base64Promise
-
-      // Call multi-model API
-      const response = await fetch('/api/analyze-product', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          imageBase64,
-          selectedModels,
-          productName: productName || undefined
-        })
-      })
-
-      if (!response.ok) {
-        throw new Error(`API returned ${response.status}: ${response.statusText}`)
-      }
-
-      const data = await response.json()
-
-      if (!data.success) {
-        throw new Error(data.error || 'API returned unsuccessful response')
-      }
-
-      if (!data.results || data.results.length === 0) {
-        throw new Error('No results returned from API')
-      }
-
-      setMultiModelResults(data.results)
-      
-      // Set the first successful result as primary
-      const primaryResult = data.results.find((r: any) => r.success)
-      
-      if (!primaryResult?.data) {
-        throw new Error('All AI models failed. Please check API keys and try again.')
-      }
-
-      const analysisData = primaryResult.data
-      
-      // Validate required data
-      if (!analysisData.technical_analysis || !analysisData.marketing_content) {
-        throw new Error('Invalid response structure from AI model')
-      }
-
-      setAnalysisResult({
-        productType: analysisData.technical_analysis?.product_type || 'Unknown',
-        keyFeatures: analysisData.technical_analysis?.key_features || ['AI Analysis Failed'],
-        colors: analysisData.technical_analysis?.colors || ['#000000'],
-        visualStyle: analysisData.technical_analysis?.visual_style || 'N/A',
-        aiPrompt: analysisData.ai_prompts?.positive || '',
-        negativePrompt: analysisData.ai_prompts?.negative || '',
-        confidence: analysisData.metadata?.confidence || 0,
-        processingTime: primaryResult.processing_time,
-        models: data.results.map((r: any) => r.model),
-        isFashion: analysisData.metadata?.is_fashion || false,
-        marketingContent: analysisData.marketing_content || {}
-      })
-      setShowFashionForm(analysisData.metadata?.is_fashion || false)
-      setMarketingContent(analysisData.marketing_content || {})
-
-    } catch (error: any) {
-      console.error('PRODUCTION ERROR - Analysis failed:', error)
-      
-      // Show error to user instead of falling back to mock
-      alert(`❌ LỖI PHÂN TÍCH:\n\n${error.message}\n\nVui lòng:\n1. Kiểm tra kết nối internet\n2. Thử lại sau vài giây\n3. Chọn model khác nếu vấn đề vẫn còn`)
-      
-    } finally {
-      setIsAnalyzing(false)
-    }
-  }
-
-  // Copy to clipboard
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text)
-  }
-
-  // Translation dictionary
-  const translations: Record<string, string> = {
-    'High Resolution': 'Độ Phân Giải Cao',
-    'Modern Design': 'Thiết Kế Hiện Đại',
-    'Premium Material': 'Chất Liệu Cao Cấp',
-    'Professional': 'Chuyên Nghiệp',
-    'Minimalist': 'Tối Giản',
-    'Elegant': 'Sang Trọng',
-    'Casual': 'Năng Động',
-    'Luxury': 'Cao Cấp',
-    'Vintage': 'Cổ Điển',
-    'Electronics Device': 'Thiết Bị Điện Tử',
-    'Fashion Item': 'Thời Trang',
-    'Clothing': 'Quần Áo',
-    'Accessories': 'Phụ Kiện',
-    'Footwear': 'Giày Dép'
-  }
-
-  const translateToVietnamese = (text: string): string => {
-    return translations[text] || text
-  }
-
-  // Generate Fashion Model Prompt
-  const generateFashionPrompt = (productDesc: string, options: typeof fashionOptions) => {
-    const genderMap: Record<string, {en: string, vi: string}> = {
-      male: { en: 'male', vi: 'nam' },
-      female: { en: 'female', vi: 'nữ' },
-      unisex: { en: 'unisex', vi: 'unisex' }
-    }
-
-    const ethnicityMap: Record<string, {en: string, vi: string}> = {
-      vietnam: { en: 'Vietnamese', vi: 'Việt Nam' },
-      korea: { en: 'Korean', vi: 'Hàn Quốc' },
-      western: { en: 'Caucasian', vi: 'Âu Mỹ' },
-      latin: { en: 'Latin', vi: 'Latin' }
-    }
-
-    const ageMap: Record<string, {en: string, vi: string}> = {
-      genz: { en: '22 year old', vi: '22 tuổi' },
-      adult: { en: '28 year old', vi: '28 tuổi' },
-      middle: { en: '35 year old', vi: '35 tuổi' }
-    }
-
-    const backgroundMap: Record<string, {en: string, vi: string}> = {
-      studio: { en: 'white studio background', vi: 'studio phông trắng' },
-      saigon: { en: 'urban street in Saigon Vietnam', vi: 'đường phố Sài Gòn' },
-      cafe: { en: 'luxury cafe interior', vi: 'quán cafe sang trọng' },
-      cyberpunk: { en: 'cyberpunk neon studio', vi: 'studio phong cách cyberpunk' }
-    }
-
-    const shotMap: Record<string, {en: string, vi: string}> = {
-      full: { en: 'Full body shot', vi: 'Ảnh chụp toàn thân' },
-      portrait: { en: 'Portrait shot', vi: 'Ảnh chân dung' }
-    }
-
-    const gender = genderMap[options.gender]
-    const ethnicity = ethnicityMap[options.ethnicity]
-    const age = ageMap[options.ageGroup]
-    const background = backgroundMap[options.background]
-    const shot = shotMap[options.shotType]
-
-    const promptEN = `${shot.en} of a ${age.en} ${ethnicity.en} ${gender.en} model wearing ${productDesc}, posing in ${background.en}, professional photography, studio lighting, fashion editorial, 8k resolution, photorealistic, high fashion, detailed texture`
-
-    const promptVI = `${shot.vi} của người mẫu ${gender.vi} ${ethnicity.vi} ${age.vi} mặc ${productDesc}, chụp tại ${background.vi}, nhiếp ảnh chuyên nghiệp, ánh sáng studio, phong cách thời trang cao cấp, độ phân giải 8k, ảnh thực tế, chi tiết sắc nét`
-
-    return { en: promptEN, vi: promptVI }
-  }
-
-  // Handle Fashion Form Submit
-  const handleFashionGenerate = () => {
-    const productDesc = analysisResult?.productType || 'fashion item'
-    const prompt = generateFashionPrompt(productDesc, fashionOptions)
-    setFashionPrompt(prompt)
-  }
-
-  // Build Smart Prompt for Studio
-  const buildStudioPrompt = () => {
-    const genderMap: Record<string, string> = {
-      male: 'male',
-      female: 'female',
-      unisex: 'androgynous'
-    }
-
-    const ethnicityMap: Record<string, string> = {
-      vietnam: 'Vietnamese Asian',
-      western: 'Caucasian',
-      korea: 'Korean',
-      latin: 'Latin American'
-    }
-
-    const ageMap: Record<string, string> = {
-      genz: '22 year old',
-      adult: '28 year old',
-      middle: '38 year old'
-    }
-
-    const backgroundMap: Record<string, string> = {
-      studio: 'professional white studio background with soft lighting',
-      street: 'urban street setting with natural daylight',
-      cafe: 'luxury modern cafe interior with warm ambient lighting',
-      office: 'elegant corporate office with sophisticated backdrop',
-      cyberpunk: 'futuristic cyberpunk neon city at night'
-    }
-
-    const lightingMap: Record<string, string> = {
-      studio: 'soft studio lighting, professional setup',
-      street: 'natural daylight, golden hour',
-      cafe: 'warm ambient lighting, cozy atmosphere',
-      office: 'professional indoor lighting, bright and clean',
-      cyberpunk: 'dramatic neon lighting, high contrast'
-    }
-
-    const productDesc = analysisResult?.productType || 'stylish outfit'
-    const gender = genderMap[studioConfig.gender] || 'female'
-    const ethnicity = ethnicityMap[studioConfig.ethnicity] || 'Asian'
-    const age = ageMap[studioConfig.age] || '25 year old'
-    const background = backgroundMap[studioConfig.background] || 'white studio background'
-    const lighting = lightingMap[studioConfig.background] || 'soft studio lighting'
-
-    return `Full body shot of a ${age} ${ethnicity} ${gender} model wearing ${productDesc}, posing in ${background}, ${lighting}, professional fashion photography, 8k ultra high resolution, photorealistic, detailed skin texture, sharp focus, high fashion editorial style, elegant pose`
-  }
-
-  // Handle Generate Model Image with Flux
-  const handleGenerateModelImage = async () => {
-    if (!analysisResult?.aiPrompt) return
-
-    setIsGeneratingModel(true)
-    setGeneratedModelImage('')
-
-    try {
-      // Build smart prompt from studio config
-      const smartPrompt = buildStudioPrompt()
-
-      const response = await fetch('/api/generate-model', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          prompt: smartPrompt,
-          aspect_ratio: studioConfig.aspectRatio
-        })
-      })
-
-      const data = await response.json()
-
-      // Handle 503 - Model is loading
-      if (response.status === 503) {
-        alert(`⏳ ${data.error || 'Mô hình AI đang khởi động'}\n\n${data.message || 'Vui lòng thử lại sau 20 giây.'}\n\nĐây là lỗi tạm thời do Free Tier của Hugging Face.`)
-        return
-      }
-
-      // Handle 402 - Billing error
-      if (response.status === 402) {
-        alert('⚠️ Tài khoản Hugging Face đã vượt quota.\n\nVui lòng kiểm tra tại: https://huggingface.co/settings/billing')
-        return
-      }
-
-      // Handle 500 - Token not configured
-      if (response.status === 500 && data.error?.includes('chưa được cấu hình')) {
-        alert('⚠️ Hugging Face API Token chưa được cấu hình!\n\nVui lòng:\n1. Lấy token tại: https://huggingface.co/settings/tokens\n2. Thêm vào file .env.local:\n   HUGGINGFACE_API_TOKEN=your_token_here\n3. Restart server')
-        return
-      }
-
-      if (data.success) {
-        setGeneratedModelImage(data.imageUrl)
-      } else {
-        alert(`Lỗi: ${data.error}\n\n${data.message || ''}`)
-      }
-    } catch (error: any) {
-      alert(`Lỗi kết nối: ${error.message}`)
-    } finally {
-      setIsGeneratingModel(false)
-    }
-  }
-
-  // Download generated image
-  const downloadImage = (url: string) => {
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `bg-ai-model-${Date.now()}.webp`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-  }
-
   // Boot Sequence Screen
   if (!bootComplete) {
     return (
@@ -434,7 +58,7 @@ export default function CyberWebapp() {
               BG AI TOOLS
             </motion.h1>
             <p className="text-cyber-secondary text-xl">
-              ĐANG KHỚI ĐỘNG...
+              ĐANG KHỞI ĐỘNG...
             </p>
           </div>
 
@@ -514,7 +138,7 @@ export default function CyberWebapp() {
                   &gt;_ BG AI TOOLS_
                 </h1>
                 <p className="text-cyber-secondary text-sm">
-                  CÔNG CỤ AI ĐA NỀN TẢNG v2.0.1
+                  CÔNG CỤ AI ĐA NỀN TẢNG v3.8.1
                 </p>
               </div>
             </div>
@@ -541,7 +165,7 @@ export default function CyberWebapp() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
         {[
           { icon: Cpu, label: 'TẢI CPU', value: '34%', color: 'text-cyber-primary' },
-          { icon: Activity, label: 'MÔ HÌNH AI', value: '3/3', color: 'text-cyber-secondary' },
+          { icon: Activity, label: 'MÔ HÌNH AI', value: '7/7', color: 'text-cyber-secondary' },
           { icon: Zap, label: 'UPTIME', value: '99.9%', color: 'text-cyber-accent' },
           { icon: Shield, label: 'BẢO MẬT', value: 'HOẠT ĐỘNG', color: 'text-cyber-warning' },
         ].map((stat, i) => (
@@ -567,948 +191,319 @@ export default function CyberWebapp() {
         ))}
       </div>
 
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Upload Section */}
+      {/* Main Tools Grid - SHORTCUT CARDS */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        {/* Product Analyzer Card */}
         <motion.div
           initial={{ opacity: 0, x: -50 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.3 }}
-          className="lg:col-span-2"
         >
-          <div className="border border-cyber-primary p-6 glow-border">
-            <div className="flex items-center gap-3 mb-6">
-              <Terminal className="w-6 h-6 text-cyber-primary" />
-              <h2 className="text-2xl font-bold text-cyber-primary">
-                DÒNG LỆNH TẢI ẢNH
-              </h2>
-            </div>
-
-            {/* Upload Area */}
-            <div
-              className={`relative border-2 border-dashed p-8 transition-all ${
-                isDragging
-                  ? 'border-cyber-secondary bg-cyber-secondary bg-opacity-10'
-                  : 'border-cyber-primary'
-              }`}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-            >
-              <input
-                type="file"
-                id="file-upload"
-                accept="image/*"
-                onChange={handleInputChange}
-                className="hidden"
-              />
-
-              {!previewUrl ? (
-                <label
-                  htmlFor="file-upload"
-                  className="flex flex-col items-center justify-center cursor-pointer"
-                >
-                  <Upload className="w-16 h-16 text-cyber-primary mb-4" />
-                  <p className="text-cyber-primary text-lg font-bold mb-2">
-                    THẢ ẢNH VÀO ĐÂY
-                  </p>
-                  <p className="text-cyber-secondary text-sm">
-                    hoặc nhấp để chọn tệp
-                  </p>
-                  <p className="text-cyber-secondary text-xs mt-2">
-                    Hỗ trợ: JPG, PNG, WebP (tối đa 10MB)
-                  </p>
-                </label>
-              ) : (
-                <div className="space-y-4">
-                  <img
-                    src={previewUrl}
-                    alt="Preview"
-                    className="w-full h-64 object-contain border border-cyber-primary"
-                  />
-                  
-                  {/* Product Name Input */}
-                  <div className="space-y-2">
-                    <label className="text-cyber-secondary text-sm font-mono">
-                      📝 TÊN SẢN PHẨM (Tùy chọn):
-                    </label>
-                    <input
-                      type="text"
-                      value={productName}
-                      onChange={(e) => setProductName(e.target.value)}
-                      placeholder="VD: Son BlackRouge A12, Tai nghe Sony WH-1000XM5..."
-                      className="w-full bg-black border border-cyber-primary text-cyber-primary px-4 py-2 font-mono text-sm focus:outline-none focus:border-cyber-secondary transition-colors"
-                      style={{ boxShadow: '0 0 10px rgba(0, 255, 0, 0.2)' }}
-                    />
-                    <p className="text-cyber-secondary text-xs">
-                      💡 Nhập tên giúp AI viết nội dung chính xác hơn. Bỏ trống nếu muốn AI tự đoán.
+          <Link href="/tools/product-analyzer">
+            <div className="border border-cyber-primary p-8 glow-border hover:shadow-glow-green transition-all cursor-pointer group h-full">
+              <div className="flex items-start justify-between mb-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 bg-gradient-to-br from-cyan-500 to-purple-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                    <Scan className="w-8 h-8 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-cyber-primary group-hover:glow-text transition-all">
+                      AI PHÂN TÍCH SẢN PHẨM
+                    </h2>
+                    <p className="text-cyber-secondary text-sm mt-1">
+                      Upload ảnh → Nhận phân tích chi tiết
                     </p>
-                  </div>
-
-                  {/* Model Selector */}
-                  <div className="border border-cyber-secondary p-4 space-y-3" style={{ background: 'rgba(0, 255, 255, 0.05)' }}>
-                    <div className="flex items-center justify-between">
-                      <h4 className="text-cyber-secondary font-bold text-sm">
-                        🤖 CHỌN MÔ HÌNH AI ({selectedModels.length}/{AVAILABLE_MODELS.length})
-                      </h4>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={selectAllModels}
-                          className="text-xs px-2 py-1 border border-cyber-primary text-cyber-primary hover:bg-cyber-primary hover:text-black transition-colors"
-                        >
-                          TẤT CẢ
-                        </button>
-                        <button
-                          onClick={deselectAllModels}
-                          className="text-xs px-2 py-1 border border-cyber-secondary text-cyber-secondary hover:bg-cyber-secondary hover:text-black transition-colors"
-                        >
-                          BỎ CHỌN
-                        </button>
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-2">
-                      {AVAILABLE_MODELS.map((model) => (
-                        <label
-                          key={model.id}
-                          className={`flex items-center gap-2 p-2 border cursor-pointer transition-all ${
-                            selectedModels.includes(model.id)
-                              ? 'border-cyber-primary bg-cyber-primary bg-opacity-10'
-                              : 'border-cyber-secondary hover:border-cyber-primary'
-                          }`}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={selectedModels.includes(model.id)}
-                            onChange={() => toggleModel(model.id)}
-                            className="w-4 h-4"
-                          />
-                          <div className="flex-1 min-w-0">
-                            <div className="text-cyber-primary text-xs font-bold truncate">
-                              {model.icon} {model.name}
-                            </div>
-                            <div className="text-cyber-secondary text-xs truncate">
-                              {model.provider}
-                            </div>
-                          </div>
-                        </label>
-                      ))}
-                    </div>
-                    
-                    {selectedModels.length === 0 && (
-                      <p className="text-cyber-warning text-xs text-center">
-                        ⚠️ Vui lòng chọn ít nhất 1 mô hình
-                      </p>
-                    )}
-                  </div>
-                  
-                  <div className="flex gap-4">
-                    <button
-                      onClick={handleAnalyze}
-                      disabled={isAnalyzing || selectedModels.length === 0}
-                      className="flex-1 cyber-button disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {isAnalyzing ? (
-                        <>
-                          <Loader2 className="w-5 h-5 inline mr-2 animate-spin" />
-                          ĐANG PHÂN TÍCH ({selectedModels.length} MÔ HÌNH)...
-                        </>
-                      ) : (
-                        <>
-                          <Brain className="w-5 h-5 inline mr-2" />
-                          PHÂN TÍCH NGAY
-                        </>
-                      )}
-                    </button>
-                    <label
-                      htmlFor="file-upload"
-                      className="cyber-button cursor-pointer"
-                    >
-                      ĐỔI ẢNH
-                    </label>
                   </div>
                 </div>
-              )}
+                <ChevronRight className="w-6 h-6 text-cyber-primary group-hover:translate-x-2 transition-transform duration-300" />
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-2 h-2 bg-cyber-secondary rounded-full animate-pulse" />
+                  <span className="text-cyber-secondary text-sm">
+                    ✅ Phân tích kỹ thuật với 7 mô hình AI
+                  </span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-2 h-2 bg-cyber-secondary rounded-full animate-pulse" />
+                  <span className="text-cyber-secondary text-sm">
+                    ✅ Tự động tạo nội dung Marketing (Shopee/Facebook/Instagram)
+                  </span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-2 h-2 bg-cyber-secondary rounded-full animate-pulse" />
+                  <span className="text-cyber-secondary text-sm">
+                    ✅ Kịch bản video review + AI Prompts tối ưu
+                  </span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-2 h-2 bg-cyber-secondary rounded-full animate-pulse" />
+                  <span className="text-cyber-secondary text-sm">
+                    ✅ Tạo ảnh người mẫu AI với Google Imagen
+                  </span>
+                </div>
+              </div>
+
+              <div className="mt-6 p-4 bg-cyber-primary bg-opacity-10 border border-cyber-primary rounded-lg">
+                <p className="text-cyber-primary text-sm font-bold text-center">
+                  👉 NHẤN ĐỂ BẮT ĐẦU PHÂN TÍCH
+                </p>
+              </div>
             </div>
-
-            {/* Analysis Results */}
-            <AnimatePresence>
-              {analysisResult && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  className="mt-6 space-y-4"
-                >
-                  {/* Product Info */}
-                  <div className="border border-cyber-secondary p-4 glow-border-cyan">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-xl font-bold text-cyber-secondary">
-                        PHÂN TÍCH HOÀN TẤT
-                      </h3>
-                      <div className="flex items-center gap-2">
-                        <Eye className="w-5 h-5 text-cyber-secondary" />
-                        <span className="text-cyber-secondary">
-                          {analysisResult.confidence}% confidence
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="space-y-3">
-                      <div>
-                        <span className="text-cyber-secondary text-sm">
-                          LOẠI SẢN PHẨM:
-                        </span>
-                        <p className="text-cyber-primary font-bold">
-                          {translateToVietnamese(analysisResult.productType)}
-                        </p>
-                      </div>
-
-                      <div>
-                        <span className="text-cyber-secondary text-sm">
-                          ĐẶC ĐIỂM NỔI BẬT:
-                        </span>
-                        <div className="flex flex-wrap gap-2 mt-2">
-                          {analysisResult.keyFeatures.map((feature: string, i: number) => (
-                            <span
-                              key={i}
-                              className="px-3 py-1 border border-cyber-primary text-cyber-primary text-sm"
-                            >
-                              {translateToVietnamese(feature)}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div>
-                        <span className="text-cyber-secondary text-sm">
-                          PHONG CÁCH THIẾT KẾ:
-                        </span>
-                        <p className="text-cyber-primary">
-                          {analysisResult.visualStyle}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* AI Prompt */}
-                  <div className="border border-cyber-accent p-4 glow-border">
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="text-lg font-bold text-cyber-accent">
-                        PROMPT AI TỐI ƯU
-                      </h4>
-                      <div className="flex items-center gap-2">
-                        <label className="flex items-center gap-2 text-xs text-cyber-accent cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={showVietnamese}
-                            onChange={(e) => setShowVietnamese(e.target.checked)}
-                            className="w-4 h-4 bg-transparent border-2 border-cyber-accent appearance-none checked:bg-cyber-accent cursor-pointer"
-                          />
-                          Dịch sang Tiếng Việt
-                        </label>
-                        <button
-                          onClick={() => copyToClipboard(analysisResult.aiPrompt)}
-                          className="p-2 border border-cyber-accent text-cyber-accent hover:bg-cyber-accent hover:text-black transition-all"
-                        >
-                          <Copy className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                    <p className="text-cyber-primary text-sm font-mono">
-                      {analysisResult.aiPrompt}
-                    </p>
-                  </div>
-
-                  {/* Negative Prompt */}
-                  <div className="border border-cyber-danger p-4 glow-border">
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="text-lg font-bold text-cyber-danger">
-                        PROMPT PHỦ ĐỊNH
-                      </h4>
-                      <button
-                        onClick={() => copyToClipboard(analysisResult.negativePrompt)}
-                        className="p-2 border border-cyber-danger text-cyber-danger hover:bg-cyber-danger hover:text-black transition-all"
-                      >
-                        <Copy className="w-4 h-4" />
-                      </button>
-                    </div>
-                    <p className="text-cyber-danger text-sm font-mono">
-                      {analysisResult.negativePrompt}
-                    </p>
-                  </div>
-
-                  {/* Flux Model Generator */}
-                  <div className="border border-cyber-primary p-6 glow-border mt-4">
-                    <div className="flex items-center gap-3 mb-6">
-                      <Sparkles className="w-6 h-6 text-cyber-primary" />
-                      <h3 className="text-xl font-bold text-cyber-primary">
-                        TẠO ẢNH NGƯỜI MẪU AI (FLUX.1)
-                      </h3>
-                    </div>
-
-                    {/* Studio Config Panel */}
-                    <div className="border border-cyber-secondary p-4 glow-border-cyan mb-6">
-                      <div className="flex items-center gap-2 mb-4">
-                        <Camera className="w-5 h-5 text-cyber-secondary" />
-                        <h4 className="text-lg font-bold text-cyber-secondary">
-                          CẤU HÌNH STUDIO
-                        </h4>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {/* Gender */}
-                        <div>
-                          <label className="block text-cyber-secondary text-sm mb-2 font-mono">
-                            ► GIỚI TÍNH:
-                          </label>
-                          <select
-                            value={studioConfig.gender}
-                            onChange={(e) => setStudioConfig({...studioConfig, gender: e.target.value})}
-                            className="w-full bg-black border border-cyber-primary text-cyber-primary p-3 font-mono hover:border-cyber-secondary transition-all focus:outline-none focus:border-cyber-secondary focus:shadow-glow-cyan"
-                          >
-                            <option value="female">Nữ (Female)</option>
-                            <option value="male">Nam (Male)</option>
-                            <option value="unisex">Unisex</option>
-                          </select>
-                        </div>
-
-                        {/* Ethnicity */}
-                        <div>
-                          <label className="block text-cyber-secondary text-sm mb-2 font-mono">
-                            ► QUỐC GIA / SẮC TỘC:
-                          </label>
-                          <select
-                            value={studioConfig.ethnicity}
-                            onChange={(e) => setStudioConfig({...studioConfig, ethnicity: e.target.value})}
-                            className="w-full bg-black border border-cyber-primary text-cyber-primary p-3 font-mono hover:border-cyber-secondary transition-all focus:outline-none focus:border-cyber-secondary focus:shadow-glow-cyan"
-                          >
-                            <option value="vietnam">Việt Nam (Asian)</option>
-                            <option value="western">Âu Mỹ (Caucasian)</option>
-                            <option value="korea">Hàn Quốc (Korean)</option>
-                            <option value="latin">Latin (Latin American)</option>
-                          </select>
-                        </div>
-
-                        {/* Age */}
-                        <div>
-                          <label className="block text-cyber-secondary text-sm mb-2 font-mono">
-                            ► ĐỘ TUỔI:
-                          </label>
-                          <select
-                            value={studioConfig.age}
-                            onChange={(e) => setStudioConfig({...studioConfig, age: e.target.value})}
-                            className="w-full bg-black border border-cyber-primary text-cyber-primary p-3 font-mono hover:border-cyber-secondary transition-all focus:outline-none focus:border-cyber-secondary focus:shadow-glow-cyan"
-                          >
-                            <option value="genz">Gen Z (18-24)</option>
-                            <option value="adult">Trưởng thành (25-35)</option>
-                            <option value="middle">Trung niên (35-50)</option>
-                          </select>
-                        </div>
-
-                        {/* Background */}
-                        <div>
-                          <label className="block text-cyber-secondary text-sm mb-2 font-mono">
-                            ► BỐI CẢNH:
-                          </label>
-                          <select
-                            value={studioConfig.background}
-                            onChange={(e) => setStudioConfig({...studioConfig, background: e.target.value})}
-                            className="w-full bg-black border border-cyber-primary text-cyber-primary p-3 font-mono hover:border-cyber-secondary transition-all focus:outline-none focus:border-cyber-secondary focus:shadow-glow-cyan"
-                          >
-                            <option value="studio">Studio Phông Trơn (Xám/Trắng)</option>
-                            <option value="street">Đường Phố</option>
-                            <option value="cafe">Quán Cafe</option>
-                            <option value="office">Văn Phòng Sang Trọng</option>
-                            <option value="cyberpunk">Cyberpunk City</option>
-                          </select>
-                        </div>
-
-                        {/* Aspect Ratio */}
-                        <div className="md:col-span-2">
-                          <label className="block text-cyber-secondary text-sm mb-2 font-mono">
-                            ► TỈ LỆ KHUNG HÌNH:
-                          </label>
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                            {[
-                              { value: '9:16', label: '9:16 (TikTok/Story)', icon: '📱' },
-                              { value: '3:4', label: '3:4 (Portrait)', icon: '📷' },
-                              { value: '1:1', label: '1:1 (Vuông)', icon: '🔲' },
-                              { value: '16:9', label: '16:9 (Youtube)', icon: '🎬' }
-                            ].map((ratio) => (
-                              <button
-                                key={ratio.value}
-                                onClick={() => setStudioConfig({...studioConfig, aspectRatio: ratio.value})}
-                                className={`p-3 border font-mono text-xs transition-all ${
-                                  studioConfig.aspectRatio === ratio.value
-                                    ? 'border-cyber-secondary bg-cyber-secondary bg-opacity-20 text-cyber-secondary shadow-glow-cyan'
-                                    : 'border-cyber-primary text-cyber-primary hover:border-cyber-secondary'
-                                }`}
-                              >
-                                <div className="text-lg mb-1">{ratio.icon}</div>
-                                {ratio.label}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="mt-4 p-3 border border-cyber-warning bg-cyber-warning bg-opacity-10">
-                        <p className="text-cyber-warning text-xs font-mono">
-                          💡 TIP: Cấu hình này sẽ tự động tạo prompt chuyên nghiệp cho AI Model Generator
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Generate Button */}
-                    <button
-                      onClick={handleGenerateModelImage}
-                      disabled={isGeneratingModel}
-                      className="w-full cyber-button mb-4 text-lg py-4"
-                    >
-                      {isGeneratingModel ? (
-                        <>
-                          <Loader2 className="w-6 h-6 inline mr-2 animate-spin" />
-                          ĐANG KẾT NỐI GOOGLE IMAGEN... (10-30s)
-                        </>
-                      ) : (
-                        <>
-                          <Sparkles className="w-6 h-6 inline mr-2" />
-                          ⚡ TẠO ẢNH NGƯỜI MẪU (GOOGLE AI)
-                        </>
-                      )}
-                    </button>
-
-                    {/* Generated Image Result */}
-                    {generatedModelImage && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="space-y-4"
-                      >
-                        <div className="border border-cyber-secondary p-2 glow-border-cyan">
-                          <div className="relative border border-cyber-primary glow-border">
-                            <img
-                              src={generatedModelImage}
-                              alt="Generated Model"
-                              className="w-full h-auto"
-                            />
-                            <div className="absolute top-2 right-2 bg-black bg-opacity-80 px-3 py-1 border border-cyber-secondary">
-                              <span className="text-cyber-secondary text-xs font-mono">
-                                {studioConfig.aspectRatio}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => downloadImage(generatedModelImage)}
-                          className="w-full cyber-button"
-                        >
-                          <Download className="w-5 h-5 inline mr-2" />
-                          DOWNLOAD HD ({studioConfig.aspectRatio})
-                        </button>
-                      </motion.div>
-                    )}
-                  </div>
-
-                  {/* Fashion Model Generator Form */}
-                  {showFashionForm && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="border border-cyber-warning p-6 glow-border mt-4"
-                    >
-                      <div className="flex items-center gap-3 mb-4">
-                        <User className="w-6 h-6 text-cyber-warning" />
-                        <h3 className="text-xl font-bold text-cyber-warning">
-                          TẠO NGƯỜI MẪU AI
-                        </h3>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        {/* Gender */}
-                        <div>
-                          <label className="block text-cyber-secondary text-sm mb-2">
-                            GIỚI TÍNH:
-                          </label>
-                          <select
-                            value={fashionOptions.gender}
-                            onChange={(e) => setFashionOptions({...fashionOptions, gender: e.target.value})}
-                            className="w-full bg-black border border-cyber-primary text-cyber-primary p-2 font-mono"
-                          >
-                            <option value="male">Nam</option>
-                            <option value="female">Nữ</option>
-                            <option value="unisex">Unisex</option>
-                          </select>
-                        </div>
-
-                        {/* Ethnicity */}
-                        <div>
-                          <label className="block text-cyber-secondary text-sm mb-2">
-                            QUỐC GIA/SẮC TỘC:
-                          </label>
-                          <select
-                            value={fashionOptions.ethnicity}
-                            onChange={(e) => setFashionOptions({...fashionOptions, ethnicity: e.target.value})}
-                            className="w-full bg-black border border-cyber-primary text-cyber-primary p-2 font-mono"
-                          >
-                            <option value="vietnam">Việt Nam</option>
-                            <option value="korea">Hàn Quốc</option>
-                            <option value="western">Âu Mỹ</option>
-                            <option value="latin">Latin</option>
-                          </select>
-                        </div>
-
-                        {/* Age Group */}
-                        <div>
-                          <label className="block text-cyber-secondary text-sm mb-2">
-                            ĐỘ TUỔI:
-                          </label>
-                          <select
-                            value={fashionOptions.ageGroup}
-                            onChange={(e) => setFashionOptions({...fashionOptions, ageGroup: e.target.value})}
-                            className="w-full bg-black border border-cyber-primary text-cyber-primary p-2 font-mono"
-                          >
-                            <option value="genz">Gen Z (18-24)</option>
-                            <option value="adult">Trưởng thành (25-35)</option>
-                            <option value="middle">Trung niên (36-45)</option>
-                          </select>
-                        </div>
-
-                        {/* Background */}
-                        <div>
-                          <label className="block text-cyber-secondary text-sm mb-2">
-                            BỐI CẢNH:
-                          </label>
-                          <select
-                            value={fashionOptions.background}
-                            onChange={(e) => setFashionOptions({...fashionOptions, background: e.target.value})}
-                            className="w-full bg-black border border-cyber-primary text-cyber-primary p-2 font-mono"
-                          >
-                            <option value="studio">Studio Phông Trắng</option>
-                            <option value="saigon">Đường Phố Sài Gòn</option>
-                            <option value="cafe">Cafe Sang Trọng</option>
-                            <option value="cyberpunk">Studio Cyberpunk</option>
-                          </select>
-                        </div>
-
-                        {/* Shot Type */}
-                        <div className="md:col-span-2">
-                          <label className="block text-cyber-secondary text-sm mb-2">
-                            GÓC CHỤP:
-                          </label>
-                          <select
-                            value={fashionOptions.shotType}
-                            onChange={(e) => setFashionOptions({...fashionOptions, shotType: e.target.value})}
-                            className="w-full bg-black border border-cyber-primary text-cyber-primary p-2 font-mono"
-                          >
-                            <option value="full">Toàn thân</option>
-                            <option value="portrait">Chân dung (Nửa người)</option>
-                          </select>
-                        </div>
-                      </div>
-
-                      <button
-                        onClick={handleFashionGenerate}
-                        className="w-full cyber-button mb-4"
-                      >
-                        <Camera className="w-5 h-5 inline mr-2" />
-                        TẠO PROMPT NGƯỜI MẪU
-                      </button>
-
-                      {/* Generated Fashion Prompt */}
-                      {fashionPrompt.en && (
-                        <div className="space-y-3">
-                          <div className="border border-cyber-accent p-4 glow-border">
-                            <div className="flex items-center justify-between mb-2">
-                              <h4 className="text-sm font-bold text-cyber-accent">
-                                PROMPT NGƯỜI MẪU (TIẾNG ANH)
-                              </h4>
-                              <button
-                                onClick={() => copyToClipboard(fashionPrompt.en)}
-                                className="p-2 border border-cyber-accent text-cyber-accent hover:bg-cyber-accent hover:text-black transition-all"
-                              >
-                                <Copy className="w-4 h-4" />
-                              </button>
-                            </div>
-                            <p className="text-cyber-accent text-xs font-mono">
-                              {fashionPrompt.en}
-                            </p>
-                          </div>
-
-                          <div className="border border-cyber-secondary p-4 glow-border-cyan">
-                            <div className="flex items-center justify-between mb-2">
-                              <h4 className="text-sm font-bold text-cyber-secondary">
-                                BẢN DỊCH TIẾNG VIỆT (Tham khảo)
-                              </h4>
-                            </div>
-                            <p className="text-cyber-secondary text-xs font-mono">
-                              {fashionPrompt.vi}
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                    </motion.div>
-                  )}
-
-                  {/* Enhanced Marketing Content Section with Tabs */}
-                  {marketingContent && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="border border-cyber-warning p-6 glow-border mt-4"
-                    >
-                      <div className="flex items-center gap-3 mb-6">
-                        <Megaphone className="w-6 h-6 text-cyber-warning" />
-                        <h3 className="text-2xl font-bold text-cyber-warning">
-                          NỘI DUNG QUẢNG CÁO
-                        </h3>
-                      </div>
-
-                      {/* Tab Navigation */}
-                      <div className="flex gap-2 mb-6 border-b border-cyber-secondary pb-2">
-                        <button
-                          onClick={() => setActiveMarketingTab('sales')}
-                          className={`px-4 py-2 text-sm font-bold transition-all ${
-                            activeMarketingTab === 'sales'
-                              ? 'bg-cyber-primary text-black'
-                              : 'text-cyber-primary border border-cyber-primary hover:bg-cyber-primary hover:bg-opacity-20'
-                          }`}
-                        >
-                          📢 BÁN HÀNG
-                        </button>
-                        <button
-                          onClick={() => setActiveMarketingTab('video')}
-                          className={`px-4 py-2 text-sm font-bold transition-all ${
-                            activeMarketingTab === 'video'
-                              ? 'bg-cyber-secondary text-black'
-                              : 'text-cyber-secondary border border-cyber-secondary hover:bg-cyber-secondary hover:bg-opacity-20'
-                          }`}
-                        >
-                          🎬 KỊCH BẢN VIDEO
-                        </button>
-                        <button
-                          onClick={() => setActiveMarketingTab('hooks')}
-                          className={`px-4 py-2 text-sm font-bold transition-all ${
-                            activeMarketingTab === 'hooks'
-                              ? 'bg-cyber-accent text-black'
-                              : 'text-cyber-accent border border-cyber-accent hover:bg-cyber-accent hover:bg-opacity-20'
-                          }`}
-                        >
-                          🎯 TIÊU ĐỀ & HOOK
-                        </button>
-                      </div>
-
-                      {/* Tab Content */}
-                      {activeMarketingTab === 'sales' && (
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          {/* Shopee Style */}
-                          <div className="border border-cyber-primary p-4 glow-border">
-                            <div className="flex items-center gap-2 mb-3">
-                              <ShoppingBag className="w-5 h-5 text-cyber-primary" />
-                              <h4 className="text-sm font-bold text-cyber-primary">
-                                SHOPEE / E-COMMERCE
-                              </h4>
-                            </div>
-                            <div className="relative">
-                              <p className="text-cyber-primary text-xs font-mono whitespace-pre-line h-64 overflow-y-auto pr-8">
-                                {marketingContent.sales_copy?.shopee || marketingContent.shopee || 'Đang chờ dữ liệu từ AI...'}
-                              </p>
-                              <button
-                                onClick={() => copyToClipboard(marketingContent.sales_copy?.shopee || marketingContent.shopee || '')}
-                                className="absolute top-2 right-2 p-2 border border-cyber-primary text-cyber-primary hover:bg-cyber-primary hover:text-black transition-all"
-                              >
-                                <Copy className="w-4 h-4" />
-                              </button>
-                            </div>
-                          </div>
-
-                          {/* Facebook Story */}
-                          <div className="border border-cyber-secondary p-4 glow-border-cyan">
-                            <div className="flex items-center gap-2 mb-3">
-                              <MessageCircle className="w-5 h-5 text-cyber-secondary" />
-                              <h4 className="text-sm font-bold text-cyber-secondary">
-                                FACEBOOK / TIKTOK
-                              </h4>
-                            </div>
-                            <div className="relative">
-                              <p className="text-cyber-secondary text-xs font-mono whitespace-pre-line h-64 overflow-y-auto pr-8">
-                                {marketingContent.sales_copy?.facebook_story || marketingContent.facebook || 'Đang chờ dữ liệu từ AI...'}
-                              </p>
-                              <button
-                                onClick={() => copyToClipboard(marketingContent.sales_copy?.facebook_story || marketingContent.facebook || '')}
-                                className="absolute top-2 right-2 p-2 border border-cyber-secondary text-cyber-secondary hover:bg-cyber-secondary hover:text-black transition-all"
-                              >
-                                <Copy className="w-4 h-4" />
-                              </button>
-                            </div>
-                          </div>
-
-                          {/* Instagram Minimal */}
-                          <div className="border border-cyber-accent p-4 glow-border">
-                            <div className="flex items-center gap-2 mb-3">
-                              <Instagram className="w-5 h-5 text-cyber-accent" />
-                              <h4 className="text-sm font-bold text-cyber-accent">
-                                INSTAGRAM / LUXURY
-                              </h4>
-                            </div>
-                            <div className="relative">
-                              <p className="text-cyber-accent text-xs font-mono whitespace-pre-line h-64 overflow-y-auto pr-8">
-                                {marketingContent.sales_copy?.instagram_minimal || marketingContent.instagram || 'Đang chờ dữ liệu từ AI...'}
-                              </p>
-                              <button
-                                onClick={() => copyToClipboard(marketingContent.sales_copy?.instagram_minimal || marketingContent.instagram || '')}
-                                className="absolute top-2 right-2 p-2 border border-cyber-accent text-cyber-accent hover:bg-cyber-accent hover:text-black transition-all"
-                              >
-                                <Copy className="w-4 h-4" />
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {activeMarketingTab === 'video' && (
-                        <div className="border border-cyber-secondary p-6 glow-border-cyan">
-                          <div className="flex items-center justify-between mb-4">
-                            <h4 className="text-lg font-bold text-cyber-secondary">
-                              🎬 {marketingContent.video_script?.title || 'Kịch Bản Video Review'}
-                            </h4>
-                            {marketingContent.video_script?.script && (
-                              <TTSPlayer 
-                                text={marketingContent.video_script.script
-                                  .map((s: any) => s.audio)
-                                  .join(' ')}
-                                voice="vi-VN-Wavenet-A"
-                                buttonText="🔊 Nghe thử kịch bản"
-                              />
-                            )}
-                          </div>
-                          {marketingContent.video_script?.script ? (
-                            <div className="space-y-4">
-                              {marketingContent.video_script.script.map((scene: any, idx: number) => (
-                                <div key={idx} className="border border-cyber-secondary p-4 bg-black bg-opacity-30">
-                                  <div className="flex items-start gap-3">
-                                    <div className="text-cyber-warning font-bold text-sm min-w-[100px]">
-                                      {scene.scene}
-                                    </div>
-                                    <div className="flex-1">
-                                      <p className="text-cyber-primary text-sm font-mono">{scene.audio}</p>
-                                      <div className="mt-2">
-                                        <TTSPlayer 
-                                          text={scene.audio}
-                                          voice="vi-VN-Wavenet-A"
-                                          buttonText="🔊 Nghe scene này"
-                                          className="inline-block"
-                                        />
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                              ))}
-                              <button
-                                onClick={() => {
-                                  const fullScript = marketingContent.video_script.script
-                                    .map((s: any) => `${s.scene}:\n${s.audio}`)
-                                    .join('\n\n')
-                                  copyToClipboard(`Tiêu đề: ${marketingContent.video_script.title}\n\n${fullScript}`)
-                                }}
-                                className="w-full cyber-button"
-                              >
-                                <Copy className="w-4 h-4 inline mr-2" />
-                                COPY TOÀN BỘ KỊCH BẢN
-                              </button>
-                            </div>
-                          ) : (
-                            <p className="text-cyber-secondary text-sm">Không có dữ liệu kịch bản video. Vui lòng thử phân tích lại với Gemini.</p>
-                          )}
-                        </div>
-                      )}
-
-                      {activeMarketingTab === 'hooks' && (
-                        <div className="space-y-6">
-                          {/* Catchy Titles */}
-                          <div className="border border-cyber-accent p-6 glow-border">
-                            <h4 className="text-lg font-bold text-cyber-accent mb-4 flex items-center gap-2">
-                              <Sparkles className="w-5 h-5" />
-                              TIÊU ĐỀ QUẢNG CÁO GIẬT GÂN
-                            </h4>
-                            {marketingContent.hooks_and_headlines?.catchy_titles ? (
-                              <div className="space-y-2">
-                                {marketingContent.hooks_and_headlines.catchy_titles.map((title: string, idx: number) => (
-                                  <div key={idx} className="flex items-start gap-3 p-3 border border-cyber-accent bg-black bg-opacity-20">
-                                    <span className="text-cyber-warning font-bold min-w-[30px]">{idx + 1}.</span>
-                                    <p className="text-cyber-primary text-sm flex-1">{title}</p>
-                                    <button
-                                      onClick={() => copyToClipboard(title)}
-                                      className="p-1 border border-cyber-accent text-cyber-accent hover:bg-cyber-accent hover:text-black transition-all"
-                                    >
-                                      <Copy className="w-3 h-3" />
-                                    </button>
-                                  </div>
-                                ))}
-                              </div>
-                            ) : (
-                              <p className="text-cyber-secondary text-sm">Không có dữ liệu tiêu đề. Vui lòng thử phân tích lại với Gemini.</p>
-                            )}
-                          </div>
-
-                          {/* Engaging Hooks */}
-                          <div className="border border-cyber-primary p-6 glow-border">
-                            <h4 className="text-lg font-bold text-cyber-primary mb-4 flex items-center gap-2">
-                              <Zap className="w-5 h-5" />
-                              CÂU MỞ ĐẦU (HOOK 3 GIÂY ĐẦU)
-                            </h4>
-                            {marketingContent.hooks_and_headlines?.engaging_hooks ? (
-                              <div className="space-y-2">
-                                {marketingContent.hooks_and_headlines.engaging_hooks.map((hook: string, idx: number) => (
-                                  <div key={idx} className="flex items-start gap-3 p-3 border border-cyber-primary bg-black bg-opacity-20">
-                                    <span className="text-cyber-warning font-bold min-w-[30px]">{idx + 1}.</span>
-                                    <p className="text-cyber-secondary text-sm flex-1">{hook}</p>
-                                    <button
-                                      onClick={() => copyToClipboard(hook)}
-                                      className="p-1 border border-cyber-primary text-cyber-primary hover:bg-cyber-primary hover:text-black transition-all"
-                                    >
-                                      <Copy className="w-3 h-3" />
-                                    </button>
-                                  </div>
-                                ))}
-                              </div>
-                            ) : (
-                              <p className="text-cyber-secondary text-sm">Không có dữ liệu hooks. Vui lòng thử phân tích lại với Gemini.</p>
-                            )}
-                          </div>
-                        </div>
-                      )}
-
-                      <div className="mt-4 text-xs text-cyber-secondary text-center">
-                        💡 Tip: Click nút Copy để sao chép nội dung và sử dụng trên các nền tảng tương ứng
-                      </div>
-                    </motion.div>
-                  )}
-
-                  {/* Processing Info */}
-                  <div className="flex items-center justify-between text-sm text-cyber-secondary">
-                    <span>Thời gian xử lý: {analysisResult.processingTime}</span>
-                    <span>Mô hình sử dụng: {analysisResult.models.join(', ')}</span>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+          </Link>
         </motion.div>
 
-        {/* System Status Panel */}
+        {/* Image Generator Card */}
         <motion.div
           initial={{ opacity: 0, x: 50 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.4 }}
-          className="space-y-6"
         >
-          {/* AI Models Status */}
-          <div className="border border-cyber-primary p-6 glow-border">
-            <div className="flex items-center gap-3 mb-4">
-              <Brain className="w-6 h-6 text-cyber-primary" />
-              <h3 className="text-xl font-bold text-cyber-primary">
-                CÁC MÔ HÌNH AI
-              </h3>
-            </div>
-
-            <div className="space-y-3">
-              {[
-                { name: 'Gemini Vision', status: 'HOẠT ĐỘNG', load: 78 },
-                { name: 'GPT-4 Vision', status: 'HOẠT ĐỘNG', load: 65 },
-                { name: 'Grok Vision', status: 'HOẠT ĐỘNG', load: 82 },
-              ].map((model, i) => (
-                <div
-                  key={i}
-                  className="border border-cyber-secondary p-3 hover:shadow-glow-cyan transition-all"
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-cyber-primary font-bold text-sm">
-                      {model.name}
-                    </span>
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-cyber-secondary rounded-full animate-pulse" />
-                      <span className="text-cyber-secondary text-xs">
-                        {model.status}
-                      </span>
-                    </div>
+          <Link href="/tools/image-generator">
+            <div className="border border-cyber-secondary p-8 glow-border-cyan hover:shadow-glow-cyan transition-all cursor-pointer group h-full">
+              <div className="flex items-start justify-between mb-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                    <ImageIcon className="w-8 h-8 text-white" />
                   </div>
-                  <div className="relative h-2 bg-black border border-cyber-secondary">
-                    <motion.div
-                      className="absolute inset-y-0 left-0 bg-cyber-secondary"
-                      initial={{ width: 0 }}
-                      animate={{ width: `${model.load}%` }}
-                      transition={{ duration: 1, delay: i * 0.2 }}
-                    />
-                  </div>
-                  <div className="text-right text-cyber-secondary text-xs mt-1">
-                    {model.load}% công suất
+                  <div>
+                    <h2 className="text-2xl font-bold text-cyber-secondary group-hover:glow-text transition-all">
+                      TẠO ẢNH AI
+                    </h2>
+                    <p className="text-cyber-secondary text-sm mt-1">
+                      Google Imagen 3 - Chất lượng cao
+                    </p>
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
+                <ChevronRight className="w-6 h-6 text-cyber-secondary group-hover:translate-x-2 transition-transform duration-300" />
+              </div>
 
-          {/* System Logs */}
-          <div className="border border-cyber-warning p-6 glow-border">
-            <div className="flex items-center gap-3 mb-4">
-              <Server className="w-6 h-6 text-cyber-warning" />
-              <h3 className="text-xl font-bold text-cyber-warning">
-                NHẬT KÝ HỆ THỐNG
-              </h3>
-            </div>
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-2 h-2 bg-cyber-accent rounded-full animate-pulse" />
+                  <span className="text-cyber-secondary text-sm">
+                    🎨 Tạo ảnh từ mô tả văn bản
+                  </span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-2 h-2 bg-cyber-accent rounded-full animate-pulse" />
+                  <span className="text-cyber-secondary text-sm">
+                    🖼️ Đa dạng phong cách: Thực tế, Anime, Art
+                  </span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-2 h-2 bg-cyber-accent rounded-full animate-pulse" />
+                  <span className="text-cyber-secondary text-sm">
+                    ⚡ Tốc độ cao - Chất lượng 4K
+                  </span>
+                </div>
+              </div>
 
-            <div className="space-y-2 font-mono text-xs">
-              {[
-                '[17:32:15] Mạng nơ-ron đã khởi tạo',
-                '[17:32:16] Kết nối thành công',
-                '[17:32:17] Tất cả hệ thống đang hoạt động',
-                '[17:32:18] Sẵn sàng phân tích',
-                '[17:32:19] Đang chờ dữ liệu...',
-              ].map((log, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.1 }}
-                  className="flex items-center gap-2 text-cyber-warning"
-                >
-                  <ChevronRight className="w-3 h-3" />
-                  <span>{log}</span>
-                </motion.div>
-              ))}
+              <div className="mt-6 p-4 bg-cyber-secondary bg-opacity-10 border border-cyber-secondary rounded-lg">
+                <p className="text-cyber-secondary text-sm font-bold text-center">
+                  🎨 NHẤN ĐỂ TẠO ẢNH
+                </p>
+              </div>
             </div>
-          </div>
+          </Link>
+        </motion.div>
 
-          {/* Quick Actions */}
-          <div className="border border-cyber-accent p-6 glow-border">
-            <div className="flex items-center gap-3 mb-4">
-              <Zap className="w-6 h-6 text-cyber-accent" />
-              <h3 className="text-xl font-bold text-cyber-accent">
-                HÀNH ĐỘNG NHANH
-              </h3>
-            </div>
+        {/* Video Generator Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 50 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+        >
+          <Link href="/tools/video-generator">
+            <div className="border border-cyber-accent p-8 glow-border hover:shadow-glow-cyan transition-all cursor-pointer group h-full">
+              <div className="flex items-start justify-between mb-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-red-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                    <Video className="w-8 h-8 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-cyber-accent group-hover:glow-text transition-all">
+                      TẠO VIDEO AI
+                    </h2>
+                    <p className="text-cyber-secondary text-sm mt-1">
+                      Biến ý tưởng thành video chuyên nghiệp
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight className="w-6 h-6 text-cyber-accent group-hover:translate-x-2 transition-transform duration-300" />
+              </div>
 
-            <div className="space-y-2">
-              {[
-                { icon: Database, label: 'Xem Cơ Sở Dữ Liệu', color: 'border-cyber-primary text-cyber-primary' },
-                { icon: Shield, label: 'Quét Bảo Mật', color: 'border-cyber-secondary text-cyber-secondary' },
-                { icon: Activity, label: 'Giám Sát Hệ Thống', color: 'border-cyber-accent text-cyber-accent' },
-              ].map((action, i) => (
-                <button
-                  key={i}
-                  className={`w-full flex items-center gap-3 p-3 border ${action.color} hover:bg-opacity-10 transition-all`}
-                >
-                  <action.icon className="w-5 h-5" />
-                  <span className="font-bold text-sm">{action.label}</span>
-                  <ChevronRight className="w-4 h-4 ml-auto" />
-                </button>
-              ))}
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-2 h-2 bg-cyber-warning rounded-full animate-pulse" />
+                  <span className="text-cyber-secondary text-sm">
+                    🎬 Text-to-Video với AI
+                  </span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-2 h-2 bg-cyber-warning rounded-full animate-pulse" />
+                  <span className="text-cyber-secondary text-sm">
+                    🎥 Nhiều tỉ lệ: 16:9, 9:16, 1:1
+                  </span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-2 h-2 bg-cyber-warning rounded-full animate-pulse" />
+                  <span className="text-cyber-secondary text-sm">
+                    ⏱️ Video 5-30 giây
+                  </span>
+                </div>
+              </div>
+
+              <div className="mt-6 p-4 bg-cyber-accent bg-opacity-10 border border-cyber-accent rounded-lg">
+                <p className="text-cyber-accent text-sm font-bold text-center">
+                  🎬 NHẤN ĐỂ TẠO VIDEO
+                </p>
+              </div>
             </div>
-          </div>
+          </Link>
+        </motion.div>
+
+        {/* TTS Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 50 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+        >
+          <Link href="/tools/tts">
+            <div className="border border-cyber-warning p-8 glow-border hover:shadow-glow-green transition-all cursor-pointer group h-full">
+              <div className="flex items-start justify-between mb-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-teal-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                    <Mic className="w-8 h-8 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-cyber-warning group-hover:glow-text transition-all">
+                      GIỌNG ĐỌC AI
+                    </h2>
+                    <p className="text-cyber-secondary text-sm mt-1">
+                      Text-to-Speech tự nhiên
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight className="w-6 h-6 text-cyber-warning group-hover:translate-x-2 transition-transform duration-300" />
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                  <span className="text-cyber-secondary text-sm">
+                    🎤 Giọng Việt Nam tự nhiên
+                  </span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                  <span className="text-cyber-secondary text-sm">
+                    🌍 Hỗ trợ đa ngôn ngữ
+                  </span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                  <span className="text-cyber-secondary text-sm">
+                    ⚙️ Tùy chỉnh giọng & tốc độ
+                  </span>
+                </div>
+              </div>
+
+              <div className="mt-6 p-4 bg-cyber-warning bg-opacity-10 border border-cyber-warning rounded-lg">
+                <p className="text-cyber-warning text-sm font-bold text-center">
+                  🔊 NHẤN ĐỂ TẠO GIỌNG ĐỌC
+                </p>
+              </div>
+            </div>
+          </Link>
         </motion.div>
       </div>
+
+      {/* System Status Panel */}
+      <motion.div
+        initial={{ opacity: 0, y: 50 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.7 }}
+        className="grid grid-cols-1 lg:grid-cols-2 gap-8"
+      >
+        {/* AI Models Status */}
+        <div className="border border-cyber-primary p-6 glow-border">
+          <div className="flex items-center gap-3 mb-4">
+            <Brain className="w-6 h-6 text-cyber-primary" />
+            <h3 className="text-xl font-bold text-cyber-primary">
+              CÁC MÔ HÌNH AI
+            </h3>
+          </div>
+
+          <div className="space-y-3">
+            {[
+              { name: 'Gemini 1.5 Flash', status: 'HOẠT ĐỘNG', load: 78 },
+              { name: 'Google Imagen 3', status: 'HOẠT ĐỘNG', load: 65 },
+              { name: 'Qwen2-VL 7B', status: 'HOẠT ĐỘNG', load: 82 },
+            ].map((model, i) => (
+              <div
+                key={i}
+                className="border border-cyber-secondary p-3 hover:shadow-glow-cyan transition-all"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-cyber-primary font-bold text-sm">
+                    {model.name}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-cyber-secondary rounded-full animate-pulse" />
+                    <span className="text-cyber-secondary text-xs">
+                      {model.status}
+                    </span>
+                  </div>
+                </div>
+                <div className="relative h-2 bg-black border border-cyber-secondary">
+                  <motion.div
+                    className="absolute inset-y-0 left-0 bg-cyber-secondary"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${model.load}%` }}
+                    transition={{ duration: 1, delay: i * 0.2 }}
+                  />
+                </div>
+                <div className="text-right text-cyber-secondary text-xs mt-1">
+                  {model.load}% công suất
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* System Logs */}
+        <div className="border border-cyber-warning p-6 glow-border">
+          <div className="flex items-center gap-3 mb-4">
+            <Server className="w-6 h-6 text-cyber-warning" />
+            <h3 className="text-xl font-bold text-cyber-warning">
+              NHẬT KÝ HỆ THỐNG
+            </h3>
+          </div>
+
+          <div className="space-y-2 font-mono text-xs">
+            {[
+              '[17:32:15] Mạng nơ-ron đã khởi tạo',
+              '[17:32:16] Kết nối thành công',
+              '[17:32:17] Tất cả hệ thống đang hoạt động',
+              '[17:32:18] Sẵn sàng phân tích',
+              '[17:32:19] Đang chờ dữ liệu...',
+            ].map((log, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.1 }}
+                className="flex items-center gap-2 text-cyber-warning"
+              >
+                <ChevronRight className="w-3 h-3" />
+                <span>{log}</span>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </motion.div>
 
       {/* Footer */}
       <motion.footer
@@ -1518,7 +513,7 @@ export default function CyberWebapp() {
         className="mt-8 text-center text-cyber-secondary text-sm"
       >
         <div className="border-t border-cyber-primary pt-4">
-          <p>BG AI TOOLS © 2025 | ĐIỀU KHIỂN BỚI TRÍ TUỆ NHÂN TẠO | TẤT CẢ HỆ THỐNG ĐANG HOẠT ĐỘNG</p>
+          <p>BG AI TOOLS © 2025 | ĐIỀU KHIỂN BỞI TRÍ TUỆ NHÂN TẠO | TẤT CẢ HỆ THỐNG ĐANG HOẠT ĐỘNG</p>
         </div>
       </motion.footer>
     </div>
