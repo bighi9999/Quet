@@ -10,6 +10,7 @@ import {
   Megaphone, ShoppingBag, MessageCircle, Instagram,
   Sparkles, Download
 } from 'lucide-react'
+import TTSPlayer from './components/TTSPlayer'
 
 export default function CyberWebapp() {
   const [bootComplete, setBootComplete] = useState(false)
@@ -1268,9 +1269,20 @@ export default function CyberWebapp() {
 
                       {activeMarketingTab === 'video' && (
                         <div className="border border-cyber-secondary p-6 glow-border-cyan">
-                          <h4 className="text-lg font-bold text-cyber-secondary mb-4">
-                            🎬 {marketingContent.video_script?.title || 'Kịch Bản Video Review'}
-                          </h4>
+                          <div className="flex items-center justify-between mb-4">
+                            <h4 className="text-lg font-bold text-cyber-secondary">
+                              🎬 {marketingContent.video_script?.title || 'Kịch Bản Video Review'}
+                            </h4>
+                            {marketingContent.video_script?.script && (
+                              <TTSPlayer 
+                                text={marketingContent.video_script.script
+                                  .map((s: any) => s.audio)
+                                  .join(' ')}
+                                voice="vi-VN-Wavenet-A"
+                                buttonText="🔊 Nghe thử kịch bản"
+                              />
+                            )}
+                          </div>
                           {marketingContent.video_script?.script ? (
                             <div className="space-y-4">
                               {marketingContent.video_script.script.map((scene: any, idx: number) => (
@@ -1281,6 +1293,14 @@ export default function CyberWebapp() {
                                     </div>
                                     <div className="flex-1">
                                       <p className="text-cyber-primary text-sm font-mono">{scene.audio}</p>
+                                      <div className="mt-2">
+                                        <TTSPlayer 
+                                          text={scene.audio}
+                                          voice="vi-VN-Wavenet-A"
+                                          buttonText="🔊 Nghe scene này"
+                                          className="inline-block"
+                                        />
+                                      </div>
                                     </div>
                                   </div>
                                 </div>
