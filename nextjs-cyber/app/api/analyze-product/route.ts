@@ -310,7 +310,7 @@ export async function POST(request: NextRequest) {
     const results = await Promise.allSettled(analysisTasks)
     
     // Process results with smart fallback if enabled
-    const processedResults = results.map((result, index) => {
+    let processedResults = results.map((result, index) => {
       if (result.status === 'fulfilled') {
         return result.value
       } else {
@@ -389,25 +389,6 @@ export async function POST(request: NextRequest) {
         }
       }
     }
-
-    // Process results
-    const processedResults = results.map((result, index) => {
-      if (result.status === 'fulfilled') {
-        return result.value
-      } else {
-        const modelId = selectedModels[index]
-        const modelConfig = AVAILABLE_MODELS[modelId as keyof typeof AVAILABLE_MODELS]
-        
-        return {
-          model: modelConfig?.name || modelId,
-          modelId: modelId,
-          provider: modelConfig?.provider || 'Unknown',
-          success: false,
-          error: result.reason?.message || 'Promise rejected',
-          processing_time: '0s'
-        }
-      }
-    })
 
     // Count successful results
     const successCount = processedResults.filter(r => r.success).length

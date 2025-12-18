@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { GoogleGenerativeAI } from '@google/generative-ai'
 
 // ===== CONFIGURATION =====
 const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY
@@ -10,53 +11,11 @@ function sleep(ms: number): Promise<void> {
 }
 
 // ===== METHOD 1: GOOGLE IMAGEN (PRIMARY) =====
+// Note: Google Imagen API is not available in the standard SDK
+// Using Pollinations.ai as primary method instead
 async function generateWithGoogleImagen(prompt: string, aspectRatio: string = '9:16'): Promise<string> {
-  console.log('[Google Imagen] Starting generation...')
-  
-  if (!GOOGLE_API_KEY) {
-    throw new Error('Google API Key not configured')
-  }
-
-  try {
-    const genAI = new GoogleGenerativeAI(GOOGLE_API_KEY)
-    
-    // Try Imagen 3.0 first
-    try {
-      const model = genAI.getGenerativeModel({ model: 'imagen-3.0-generate-001' })
-      
-      // Map aspect ratio to Imagen dimensions
-      let dimensions = { width: 1024, height: 1024 }
-      if (aspectRatio === '9:16') dimensions = { width: 768, height: 1344 }
-      else if (aspectRatio === '16:9') dimensions = { width: 1344, height: 768 }
-      else if (aspectRatio === '1:1') dimensions = { width: 1024, height: 1024 }
-      
-      const result = await model.generateContent({
-        prompt: prompt,
-        numberOfImages: 1,
-        ...dimensions
-      }) as ImageGenerateContentResponse
-      
-      if (result.response && result.response.candidates && result.response.candidates[0]) {
-        const imageData = result.response.candidates[0].content
-        console.log('[Google Imagen] Success!')
-        return `data:image/png;base64,${imageData}`
-      }
-      
-      throw new Error('No image data returned from Imagen')
-      
-    } catch (imagenError: any) {
-      // If Imagen not available, try Gemini with image generation capabilities
-      console.log('[Google Imagen] Not available, trying Gemini fallback...')
-      console.error('[Imagen Error]:', imagenError.message)
-      
-      // Fallback to text-based generation with Gemini
-      throw new Error('Imagen not available for this API key')
-    }
-    
-  } catch (error: any) {
-    console.error('[Google AI Error]:', error.message)
-    throw error
-  }
+  console.log('[Image Generation] Google Imagen not available in SDK, using fallback...')
+  throw new Error('Google Imagen not available - will use fallback')
 }
 
 // ===== METHOD 2: POLLINATIONS.AI (FALLBACK - FREE, NO KEY) =====
