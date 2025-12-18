@@ -60,7 +60,10 @@ send_telegram() {
 }
 
 # Header
-clear
+# Set TERM if not set
+export TERM=${TERM:-xterm}
+
+echo ""
 echo "╔════════════════════════════════════════════════════════════════════════╗"
 echo -e "║                                                                        ║"
 echo -e "║        ${MAGENTA}🎯 ELITE DEVOPS COMMANDER - MASTER SETUP${NC}                   ║"
@@ -134,7 +137,7 @@ echo ""
 log_info "Step 3/5: Reinstalling dependencies (this may take several minutes)..."
 log_warning "Creating new package-lock.json..."
 
-if npm install; then
+if npm install --legacy-peer-deps; then
     log_success "Dependencies installed successfully"
     
     # Verify critical packages
