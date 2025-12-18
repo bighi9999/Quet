@@ -1,5 +1,9 @@
 import { NextResponse } from 'next/server';
 import os from 'os';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+
+const execPromise = promisify(exec);
 
 // Utility function to convert bytes to GB
 function bytesToGB(bytes: number): number {
@@ -40,13 +44,63 @@ async function getCPUUsage(): Promise<number> {
   return Math.round(usage);
 }
 
-// GET /api/system-health
-export async function GET() {
+// Get actual RAM + Swap info from system
+async function getMemoryInfo() {
   try {
-    // Get memory info
+    // Get RAM + Swap info using 'free' command
+    const { stdout } = await execPromise('free -b');
+    const lines = stdout.trim().split('\n');
+    
+    // Parse RAM line (second line)
+    const ramLine = lines[1].split(/\s+/);
+    const totalRam = parseInt(ramLine[1]);
+    const usedRam = parseInt(ramLine[2]);
+    const freeRam = parseInt(ramLine[3]);
+    
+    // Parse Swap line (third line)
+    const swapLine = lines[2].split(/\s+/);
+    const totalSwap = parseInt(swapLine[1]);
+    const usedSwap = parseInt(swapLine[2]);
+    
+    // Combined total (RAM + Swap)
+    const totalMemory = totalRam + totalSwap;
+    const usedMemory = usedRam + usedSwap;
+    const freeMemory = totalMemory - usedMemory;
+    
+    return {
+      totalRam,
+      usedRam,
+      freeRam,
+      totalSwap,
+      usedSwap,
+      totalMemory,
+      usedMemory,
+      freeMemory
+    };
+  } catch (error) {
+    // Fallback to os module if 'free' command fails
     const totalMem = os.totalmem();
     const freeMem = os.freemem();
     const usedMem = totalMem - freeMem;
+    
+    return {
+      totalRam: totalMem,
+      usedRam: usedMem,
+      freeRam: freeMem,
+      totalSwap: 0,
+      usedSwap: 0,
+      totalMemory: totalMem,
+      usedMemory: usedMem,
+      freeMemory: freeMem
+    };
+  }
+}
+
+// GET /api/system-health
+export async function GET() {
+  try {
+    // Get memory info (including Swap)
+    const memInfo = await getMemoryInfo();
     
     // Get CPU usage
     const cpuUsage = await getCPUUsage();
@@ -60,8 +114,8 @@ export async function GET() {
     const hostname = os.hostname();
     const cpuCount = os.cpus().length;
     
-    // Calculate RAM percentage
-    const ramUsagePercent = Math.round((usedMem / totalMem) * 100);
+    // Calculate RAM percentage (total including Swap)
+    const ramUsagePercent = Math.round((memInfo.usedMemory / memInfo.totalMemory) * 100);
     
     // Determine health status
     let status = 'HEALTHY';
@@ -74,10 +128,19 @@ export async function GET() {
     // Response object
     const healthData = {
       cpu_usage: cpuUsage,
-      ram_used: bytesToGB(usedMem),
-      ram_free: bytesToGB(freeMem),
-      ram_total: bytesToGB(totalMem),
+      ram_used: bytesToGB(memInfo.usedMemory),
+      ram_free: bytesToGB(memInfo.freeMemory),
+      ram_total: bytesToGB(memInfo.totalMemory),
       ram_usage_percent: ramUsagePercent,
+      ram_physical: {
+        used: bytesToGB(memInfo.usedRam),
+        total: bytesToGB(memInfo.totalRam),
+        free: bytesToGB(memInfo.freeRam)
+      },
+      swap: {
+        used: bytesToGB(memInfo.usedSwap),
+        total: bytesToGB(memInfo.totalSwap)
+      },
       uptime: formatUptime(uptimeSeconds),
       uptime_seconds: Math.floor(uptimeSeconds),
       status: status,

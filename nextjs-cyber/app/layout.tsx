@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 import AnimatedBackground from './components/AnimatedBackground'
 import TopNavigation from './components/TopNavigation'
-import FloatingAIBot from './components/FloatingAIBot'
+import StatusBot from './components/StatusBot'
 
 export const metadata: Metadata = {
   title: 'BG Ai Tools - Công cụ AI Đa Nền Tảng',
@@ -54,8 +54,8 @@ export default function RootLayout({
         {/* Top Navigation */}
         <TopNavigation />
         
-        {/* Floating AI Bot */}
-        <FloatingAIBot />
+        {/* System Monitor Bot */}
+        <StatusBot />
         
         {/* Main Content */}
         <main className="relative z-10">

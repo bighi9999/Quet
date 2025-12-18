@@ -43,7 +43,7 @@ const NAV_ITEMS: NavItem[] = [
     id: 'voice',
     label: 'Giọng Đọc',
     icon: <Mic className="w-5 h-5" />,
-    href: '/google-cloud'
+    href: '/tools/tts'
   },
   {
     id: 'tools',
