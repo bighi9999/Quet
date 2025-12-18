@@ -1,7 +1,13 @@
 /**
- * Multi-Provider AI Analysis API
- * Supports: Google Gemini, OpenAI GPT-4o, Anthropic Claude, Groq
- * Uses native fetch API for lightweight implementation
+ * Multi-Provider AI Analysis API - CRASH PROOF VERSION
+ * [SENIOR_BACKEND_STABILIZER MODE]
+ * 
+ * Features:
+ * - Complete crash protection with try/catch at all levels
+ * - Normalizes all responses to safe strings
+ * - Handles JSON objects from Gemini 2.0
+ * - Auto-fallback for model errors
+ * - Never returns raw objects to frontend
  */
 
 import { GoogleGenerativeAI } from "@google/generative-ai";
@@ -16,6 +22,9 @@ interface AnalyzeRequest {
   productName?: string;
 }
 
+/**
+ * Main POST handler - FULLY CRASH PROTECTED
+ */
 export async function POST(req: Request) {
   const startTime = Date.now();
   
@@ -27,78 +36,198 @@ export async function POST(req: Request) {
 
     console.log(`[AI Analysis] Provider: ${provider}, Model: ${modelId}`);
 
+    // Validation
     if (!apiKey || !provider || !modelId) {
-      return NextResponse.json(
-        { error: "Missing required headers: X-Provider, X-Model, X-Key" },
-        { status: 401 }
-      );
+      return NextResponse.json({
+        result: "⚠️ Lỗi cấu hình: Thiếu thông tin provider, model hoặc API key",
+        error: "Missing required headers",
+        provider: provider || "unknown",
+        processingTime: Date.now() - startTime
+      });
     }
 
-    // Parse request body
-    const body: AnalyzeRequest = await req.json();
+    // Parse request body with error handling
+    let body: AnalyzeRequest;
+    try {
+      body = await req.json();
+    } catch (parseError: any) {
+      return NextResponse.json({
+        result: `⚠️ Lỗi dữ liệu đầu vào: ${parseError.message}`,
+        error: "Invalid JSON body",
+        provider,
+        processingTime: Date.now() - startTime
+      });
+    }
+
     const { image, prompt } = body;
 
     if (!image || !prompt) {
-      return NextResponse.json(
-        { error: "Missing required fields: image, prompt" },
-        { status: 400 }
-      );
+      return NextResponse.json({
+        result: "⚠️ Lỗi: Thiếu ảnh hoặc prompt phân tích",
+        error: "Missing image or prompt",
+        provider,
+        processingTime: Date.now() - startTime
+      });
     }
 
     let resultText = "";
     const processingStart = Date.now();
 
-    // Route to appropriate provider
-    switch (provider) {
-      case "google":
-        resultText = await analyzeWithGoogle(apiKey, modelId, image, prompt);
-        break;
+    // Route to appropriate provider with full error handling
+    try {
+      switch (provider) {
+        case "google":
+          resultText = await analyzeWithGoogle(apiKey, modelId, image, prompt);
+          break;
 
-      case "openai":
-        resultText = await analyzeWithOpenAI(apiKey, modelId, image, prompt);
-        break;
+        case "openai":
+          resultText = await analyzeWithOpenAI(apiKey, modelId, image, prompt);
+          break;
 
-      case "anthropic":
-        resultText = await analyzeWithAnthropic(apiKey, modelId, image, prompt);
-        break;
+        case "anthropic":
+          resultText = await analyzeWithAnthropic(apiKey, modelId, image, prompt);
+          break;
 
-      case "groq":
-        // Groq uses OpenAI-compatible API format
-        resultText = await analyzeWithGroq(apiKey, modelId, image, prompt);
-        break;
+        case "groq":
+          resultText = await analyzeWithGroq(apiKey, modelId, image, prompt);
+          break;
 
-      default:
-        return NextResponse.json(
-          { error: `Unsupported provider: ${provider}` },
-          { status: 400 }
-        );
+        default:
+          resultText = `⚠️ Lỗi: Provider "${provider}" không được hỗ trợ. Vui lòng chọn: google, openai, anthropic, hoặc groq.`;
+      }
+    } catch (providerError: any) {
+      console.error(`[${provider}] Provider Error:`, providerError);
+      resultText = `⚠️ Lỗi khi gọi ${provider}: ${providerError.message}\n\nVui lòng:\n1. Kiểm tra API Key\n2. Kiểm tra model có tồn tại\n3. Thử lại sau vài giây`;
     }
 
     const processingTime = Date.now() - processingStart;
 
+    // Normalize response - CRITICAL: Always return string
+    const normalizedResult = normalizeResponse(resultText);
+
     return NextResponse.json({
-      result: resultText,
+      result: normalizedResult,
       provider,
       model: modelId,
       processingTime,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      success: !normalizedResult.startsWith('⚠️')
     });
 
   } catch (error: any) {
-    console.error('[AI Analysis] Error:', error);
+    // Ultimate fallback - server will NEVER crash
+    console.error('[AI Analysis] Critical Error:', error);
     
-    return NextResponse.json(
-      { 
-        error: error.message || "Analysis failed",
-        details: process.env.NODE_ENV === 'development' ? error.stack : undefined
-      },
-      { status: 500 }
-    );
+    return NextResponse.json({
+      result: `⚠️ Lỗi hệ thống nghiêm trọng: ${error.message}\n\nVui lòng liên hệ quản trị viên hoặc thử lại sau.`,
+      error: error.message || "Unknown critical error",
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+      processingTime: Date.now() - startTime,
+      success: false
+    });
   }
 }
 
 /**
- * Analyze with Google Gemini
+ * NORMALIZE RESPONSE - Converts ANY data type to safe string
+ * This prevents "Objects are not valid as React child" errors
+ */
+function normalizeResponse(data: any): string {
+  try {
+    // Already a string
+    if (typeof data === 'string') {
+      // Try to detect if it's a JSON string
+      try {
+        const parsed = JSON.parse(data);
+        // If parsing succeeds and it's an object with title/description
+        if (typeof parsed === 'object' && parsed !== null) {
+          if (parsed.title || parsed.description) {
+            return formatStructuredData(parsed);
+          }
+          // Other object types - stringify nicely
+          return JSON.stringify(parsed, null, 2);
+        }
+        // Parsed but not an object - return original string
+        return data;
+      } catch (e) {
+        // Not JSON - return as is
+        return data;
+      }
+    }
+
+    // It's an object (from Gemini 2.0)
+    if (typeof data === 'object' && data !== null) {
+      return formatStructuredData(data);
+    }
+
+    // Other types (number, boolean, etc.)
+    return String(data);
+  } catch (error) {
+    console.error('[Normalize] Error:', error);
+    return '⚠️ Không thể chuẩn hóa dữ liệu phản hồi';
+  }
+}
+
+/**
+ * Format structured data (title/description) into readable markdown
+ */
+function formatStructuredData(obj: any): string {
+  try {
+    let result = '';
+    
+    // Title
+    if (obj.title) {
+      result += `## ${obj.title}\n\n`;
+    }
+    
+    // Description
+    if (obj.description) {
+      result += `${obj.description}\n\n`;
+    }
+    
+    // Additional fields
+    if (obj.features && Array.isArray(obj.features)) {
+      result += `### Đặc điểm:\n`;
+      obj.features.forEach((feature: any) => {
+        result += `- ${feature}\n`;
+      });
+      result += '\n';
+    }
+    
+    if (obj.price) {
+      result += `**Giá ước tính:** ${obj.price}\n\n`;
+    }
+    
+    if (obj.category) {
+      result += `**Danh mục:** ${obj.category}\n\n`;
+    }
+    
+    // If object has other fields, add them
+    const knownFields = ['title', 'description', 'features', 'price', 'category'];
+    const otherFields = Object.keys(obj).filter(key => !knownFields.includes(key));
+    
+    if (otherFields.length > 0) {
+      result += `### Thông tin bổ sung:\n`;
+      otherFields.forEach(key => {
+        const value = obj[key];
+        if (typeof value === 'object') {
+          result += `**${key}:** ${JSON.stringify(value)}\n`;
+        } else {
+          result += `**${key}:** ${value}\n`;
+        }
+      });
+    }
+    
+    return result.trim() || JSON.stringify(obj, null, 2);
+  } catch (error) {
+    console.error('[Format] Error:', error);
+    return JSON.stringify(obj, null, 2);
+  }
+}
+
+/**
+ * Analyze with Google Gemini - CRASH PROOF
+ * Includes auto-fallback for model errors
  */
 async function analyzeWithGoogle(
   apiKey: string, 
@@ -108,29 +237,81 @@ async function analyzeWithGoogle(
 ): Promise<string> {
   try {
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: modelId });
+    
+    // Try with specified model first
+    try {
+      const model = genAI.getGenerativeModel({ model: modelId });
+      const result = await model.generateContent([
+        prompt,
+        {
+          inlineData: {
+            data: image,
+            mimeType: "image/jpeg"
+          }
+        }
+      ]);
 
-    const result = await model.generateContent([
-      prompt,
-      {
-        inlineData: {
-          data: image,
-          mimeType: "image/jpeg"
+      const response = await result.response;
+      const textResponse = response.text();
+      
+      // Normalize the response
+      return normalizeResponse(textResponse);
+    } catch (modelError: any) {
+      console.error(`[Google] Model ${modelId} failed:`, modelError.message);
+      
+      // Auto-fallback logic
+      const fallbackModels = ['gemini-1.5-pro', 'gemini-1.5-flash', 'gemini-pro'];
+      
+      // If the requested model failed and it's not in fallback list, try fallback
+      if (!fallbackModels.includes(modelId)) {
+        console.log(`[Google] Attempting fallback to gemini-1.5-flash`);
+        
+        try {
+          const fallbackModel = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+          const fallbackResult = await fallbackModel.generateContent([
+            prompt,
+            {
+              inlineData: {
+                data: image,
+                mimeType: "image/jpeg"
+              }
+            }
+          ]);
+          
+          const fallbackResponse = await fallbackResult.response;
+          const fallbackText = fallbackResponse.text();
+          
+          // Prepend a note about fallback
+          return `⚠️ Lưu ý: Model ${modelId} không khả dụng, đã tự động chuyển sang gemini-1.5-flash\n\n` + normalizeResponse(fallbackText);
+        } catch (fallbackError) {
+          console.error('[Google] Fallback also failed:', fallbackError);
+          throw modelError; // Throw original error
         }
       }
-    ]);
-
-    const response = await result.response;
-    return response.text();
+      
+      // If it's already a fallback model or fallback failed, throw
+      throw modelError;
+    }
   } catch (error: any) {
-    console.error('[Google] Error:', error);
-    throw new Error(`Google Gemini error: ${error.message}`);
+    console.error('[Google] Critical Error:', error);
+    
+    // Return user-friendly error message
+    let errorMsg = `Lỗi Google Gemini: ${error.message}`;
+    
+    if (error.message?.includes('API_KEY_INVALID')) {
+      errorMsg = 'API Key không hợp lệ. Vui lòng kiểm tra lại API Key trong Cài Đặt.';
+    } else if (error.message?.includes('quota')) {
+      errorMsg = 'Đã vượt quá giới hạn sử dụng API. Vui lòng thử lại sau hoặc kiểm tra quota.';
+    } else if (error.message?.includes('not found')) {
+      errorMsg = `Model "${modelId}" không tồn tại. Vui lòng chọn model khác.`;
+    }
+    
+    throw new Error(errorMsg);
   }
 }
 
 /**
- * Analyze with OpenAI GPT-4o
- * Uses native fetch for lightweight implementation
+ * Analyze with OpenAI GPT-4o - CRASH PROOF
  */
 async function analyzeWithOpenAI(
   apiKey: string,
@@ -171,17 +352,31 @@ async function analyzeWithOpenAI(
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ error: { message: response.statusText } }));
-      throw new Error(errorData.error?.message || `OpenAI API error: ${response.status}`);
+      const errorData = await response.json().catch(() => ({ 
+        error: { message: `HTTP ${response.status}: ${response.statusText}` } 
+      }));
+      
+      let errorMsg = errorData.error?.message || `OpenAI API error: ${response.status}`;
+      
+      if (response.status === 401) {
+        errorMsg = 'API Key không hợp lệ. Vui lòng kiểm tra lại API Key OpenAI.';
+      } else if (response.status === 429) {
+        errorMsg = 'Đã vượt quá giới hạn request. Vui lòng thử lại sau vài phút.';
+      } else if (response.status === 404) {
+        errorMsg = `Model "${modelId}" không tồn tại hoặc bạn không có quyền truy cập.`;
+      }
+      
+      throw new Error(errorMsg);
     }
 
     const data = await response.json();
     
     if (!data.choices || data.choices.length === 0) {
-      throw new Error("No response from OpenAI");
+      throw new Error("OpenAI không trả về kết quả. Vui lòng thử lại.");
     }
 
-    return data.choices[0].message.content;
+    const resultText = data.choices[0].message.content;
+    return normalizeResponse(resultText);
   } catch (error: any) {
     console.error('[OpenAI] Error:', error);
     throw new Error(`OpenAI error: ${error.message}`);
@@ -189,8 +384,7 @@ async function analyzeWithOpenAI(
 }
 
 /**
- * Analyze with Anthropic Claude
- * Uses native fetch for lightweight implementation
+ * Analyze with Anthropic Claude - CRASH PROOF
  */
 async function analyzeWithAnthropic(
   apiKey: string,
@@ -232,21 +426,34 @@ async function analyzeWithAnthropic(
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ error: { message: response.statusText } }));
-      throw new Error(errorData.error?.message || `Anthropic API error: ${response.status}`);
+      const errorData = await response.json().catch(() => ({ 
+        error: { message: `HTTP ${response.status}: ${response.statusText}` } 
+      }));
+      
+      let errorMsg = errorData.error?.message || `Anthropic API error: ${response.status}`;
+      
+      if (response.status === 401) {
+        errorMsg = 'API Key không hợp lệ. Vui lòng kiểm tra lại API Key Anthropic.';
+      } else if (response.status === 429) {
+        errorMsg = 'Đã vượt quá giới hạn request. Vui lòng thử lại sau.';
+      }
+      
+      throw new Error(errorMsg);
     }
 
     const data = await response.json();
     
     if (!data.content || data.content.length === 0) {
-      throw new Error("No response from Anthropic");
+      throw new Error("Claude không trả về kết quả. Vui lòng thử lại.");
     }
 
     // Claude returns an array of content blocks
-    return data.content
+    const resultText = data.content
       .filter((block: any) => block.type === 'text')
       .map((block: any) => block.text)
       .join('\n');
+      
+    return normalizeResponse(resultText);
   } catch (error: any) {
     console.error('[Anthropic] Error:', error);
     throw new Error(`Anthropic error: ${error.message}`);
@@ -254,8 +461,7 @@ async function analyzeWithAnthropic(
 }
 
 /**
- * Analyze with Groq (OpenAI-compatible)
- * Note: Groq currently has limited vision model support
+ * Analyze with Groq - CRASH PROOF
  */
 async function analyzeWithGroq(
   apiKey: string,
@@ -268,7 +474,7 @@ async function analyzeWithGroq(
     const visionModels = ['llama-3.2-90b-vision-preview', 'llama-3.2-11b-vision-preview'];
     
     if (!visionModels.includes(modelId)) {
-      throw new Error(`Model ${modelId} does not support vision. Please use a vision-capable model.`);
+      throw new Error(`Model "${modelId}" không hỗ trợ xử lý ảnh. Vui lòng chọn: llama-3.2-90b-vision-preview hoặc llama-3.2-11b-vision-preview`);
     }
 
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -302,17 +508,29 @@ async function analyzeWithGroq(
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ error: { message: response.statusText } }));
-      throw new Error(errorData.error?.message || `Groq API error: ${response.status}`);
+      const errorData = await response.json().catch(() => ({ 
+        error: { message: `HTTP ${response.status}: ${response.statusText}` } 
+      }));
+      
+      let errorMsg = errorData.error?.message || `Groq API error: ${response.status}`;
+      
+      if (response.status === 401) {
+        errorMsg = 'API Key không hợp lệ. Vui lòng kiểm tra lại API Key Groq.';
+      } else if (response.status === 429) {
+        errorMsg = 'Đã vượt quá giới hạn request. Vui lòng thử lại sau.';
+      }
+      
+      throw new Error(errorMsg);
     }
 
     const data = await response.json();
     
     if (!data.choices || data.choices.length === 0) {
-      throw new Error("No response from Groq");
+      throw new Error("Groq không trả về kết quả. Vui lòng thử lại.");
     }
 
-    return data.choices[0].message.content;
+    const resultText = data.choices[0].message.content;
+    return normalizeResponse(resultText);
   } catch (error: any) {
     console.error('[Groq] Error:', error);
     throw new Error(`Groq error: ${error.message}`);
@@ -324,9 +542,18 @@ async function analyzeWithGroq(
  */
 export async function GET() {
   return NextResponse.json({
-    name: "Multi-Provider AI Analysis API",
-    version: "1.0.0",
-    description: "Analyze images using multiple AI providers",
+    name: "Multi-Provider AI Analysis API - Crash Proof Edition",
+    version: "2.0.0",
+    mode: "[SENIOR_BACKEND_STABILIZER]",
+    description: "Analyze images using multiple AI providers with complete crash protection",
+    features: [
+      "✅ Complete crash protection",
+      "✅ Normalizes all responses to strings",
+      "✅ Handles JSON objects from Gemini 2.0",
+      "✅ Auto-fallback for model errors",
+      "✅ User-friendly error messages",
+      "✅ Never crashes the server"
+    ],
     supportedProviders: ["google", "openai", "anthropic", "groq"],
     requiredHeaders: {
       "X-Provider": "AI provider ID (google, openai, anthropic, groq)",
@@ -337,6 +564,14 @@ export async function GET() {
       image: "Base64 encoded image (without data:image prefix)",
       prompt: "Analysis prompt",
       productName: "Optional product name"
+    },
+    responseFormat: {
+      result: "ALWAYS a string - never an object",
+      provider: "Provider used",
+      model: "Model used",
+      processingTime: "Time in milliseconds",
+      success: "Boolean indicating success",
+      timestamp: "ISO timestamp"
     },
     example: {
       method: "POST",
