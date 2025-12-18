@@ -228,10 +228,13 @@ Return as JSON.`
   }
 }
 
-// ===== MAIN API HANDLER =====
+// ===== SMART FALLBACK PRIORITY LIST =====
+const MODEL_PRIORITY_ORDER = ['gemini', 'qwen2', 'llama', 'pixtral', 'molmo', 'phi', 'yi']
+
+// ===== MAIN API HANDLER WITH SMART FALLBACK =====
 export async function POST(request: NextRequest) {
   try {
-    const { imageBase64, selectedModels, productName } = await request.json()
+    const { imageBase64, selectedModels, productName, enableFallback = true } = await request.json()
 
     if (!imageBase64) {
       return NextResponse.json(
@@ -305,6 +308,87 @@ export async function POST(request: NextRequest) {
 
     // Execute all analysis tasks in parallel with error isolation
     const results = await Promise.allSettled(analysisTasks)
+    
+    // Process results with smart fallback if enabled
+    const processedResults = results.map((result, index) => {
+      if (result.status === 'fulfilled') {
+        return result.value
+      } else {
+        const modelId = selectedModels[index]
+        const modelConfig = AVAILABLE_MODELS[modelId as keyof typeof AVAILABLE_MODELS]
+        return {
+          model: modelConfig?.name || modelId,
+          modelId,
+          success: false,
+          error: result.reason?.message || 'Unknown error'
+        }
+      }
+    })
+    
+    // If all models failed and fallback is enabled, try priority models
+    const successfulResults = processedResults.filter(r => r.success)
+    
+    if (successfulResults.length === 0 && enableFallback) {
+      console.log('[Smart Fallback] All selected models failed. Trying priority models...')
+      
+      // Try models in priority order
+      for (const priorityModelId of MODEL_PRIORITY_ORDER) {
+        // Skip if already tried
+        if (selectedModels.includes(priorityModelId)) continue
+        
+        const modelConfig = AVAILABLE_MODELS[priorityModelId as keyof typeof AVAILABLE_MODELS]
+        if (!modelConfig) continue
+        
+        console.log(`[Smart Fallback] Attempting ${modelConfig.name}...`)
+        
+        try {
+          const startTime = Date.now()
+          let result
+          
+          // Create timeout promise (10 seconds)
+          const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('Timeout after 10s')), 10000)
+          })
+          
+          // Race between analysis and timeout
+          const analysisPromise = (async () => {
+            if (modelConfig.type === 'api' && priorityModelId === 'gemini') {
+              return await queryGemini(imageBase64, productName)
+            } else if (modelConfig.type === 'huggingface') {
+              const hfConfig = modelConfig as { endpoint: string; token: string }
+              return await queryHuggingFace(
+                hfConfig.endpoint,
+                hfConfig.token,
+                imageBase64,
+                productName
+              )
+            }
+          })()
+          
+          result = await Promise.race([analysisPromise, timeoutPromise])
+          
+          const processingTime = ((Date.now() - startTime) / 1000).toFixed(2) + 's'
+          
+          console.log(`[Smart Fallback] ✓ Success with ${modelConfig.name}`)
+          
+          // Add successful fallback result
+          processedResults.unshift({
+            model: modelConfig.name,
+            modelId: modelConfig.id,
+            provider: modelConfig.provider,
+            success: true,
+            data: result,
+            processing_time: processingTime,
+            isFallback: true
+          })
+          
+          break // Success, stop trying
+        } catch (error: any) {
+          console.error(`[Smart Fallback] ${modelConfig.name} failed:`, error.message)
+          // Continue to next priority model
+        }
+      }
+    }
 
     // Process results
     const processedResults = results.map((result, index) => {
